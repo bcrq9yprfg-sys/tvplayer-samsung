@@ -1117,6 +1117,7 @@
      ====================================================== */
   document.addEventListener('keydown', function (e) {
     var code = e.keyCode;
+    if (window.License && License.active()) { if (License.key(code)) e.preventDefault(); return; }
     var inInput = document.activeElement && document.activeElement.tagName === 'INPUT';
     if (code === KEY.ESC || (code === KEY.BACKSPACE && !inInput)) code = KEY.BACK;
     if (!$('loading').classList.contains('hidden')) { e.preventDefault(); return; }
@@ -1129,18 +1130,22 @@
   });
 
   document.addEventListener('click', function (e) {
+    if (window.License && License.active()) return;
     var t = e.target.closest && e.target.closest('#setup .focusable');
     if (!t || S.screen !== 'setup') return;
     var i = setupFocusables().indexOf(t);
     if (i > -1) { setupFocus(i); setupKey(KEY.ENTER); }
   });
 
-  /* ---------- Start ---------- */
+  /* ---------- Start (pas na geldige licentie) ---------- */
   renderNav();
-  var saved = loadSaved();
-  prefill(saved);
-  setupFocus(0);
-  if (saved) openSource(saved, false);
+  License.ensure(function () {
+    show('setup');
+    var saved = loadSaved();
+    prefill(saved);
+    setupFocus(0);
+    if (saved) openSource(saved, false);
+  });
 
   // Testhaak voor browser
   window.__tv = { S: S, loadDB: function () {} };

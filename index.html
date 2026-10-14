@@ -3,15 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920, height=1080">
-<title>TVPlayer</title>
+<title>AM IPTV</title>
 <link rel="stylesheet" href="css/style.css">
 <script src="$WEBAPIS/webapis/webapis.js"></script>
 </head>
 <body>
 
+<!-- Licentie -->
+<div id="license" class="screen hidden">
+  <div class="logo big">AM <span>IPTV</span></div>
+  <h1>Licentie activeren</h1>
+  <p class="hint">Voer de licentiecode in uit je account op am-iptv-production.up.railway.app<br>Enter the license code from your account</p>
+  <div class="form">
+    <input class="focusable" id="lic-key" type="text" autocomplete="off" placeholder="Licentiecode / License code">
+  </div>
+  <button class="focusable primary" id="lic-btn">Activeren · Activate</button>
+  <p id="lic-msg" class="msg"></p>
+  <p class="hint">Pijltjes: navigeren · OK: kiezen · Terug: afsluiten</p>
+</div>
+
 <!-- Playlist instellen -->
-<div id="setup" class="screen">
-  <div class="logo big">TV<span>Player</span></div>
+<div id="setup" class="screen hidden">
+  <div class="logo big">AM <span>IPTV</span></div>
   <h1>Playlist toevoegen</h1>
   <div class="tabs">
     <button class="focusable tab active" data-mode="m3u">M3U-link</button>
@@ -49,7 +62,7 @@
     </div>
   </div>
   <header id="topbar">
-    <div class="logo">TV<span>Player</span></div>
+    <div class="logo">AM <span>IPTV</span></div>
     <nav id="nav"></nav>
     <div id="clock"></div>
   </header>
@@ -115,6 +128,7 @@
 <div id="toast" class="hidden"></div>
 
 <script src="js/config.js"></script>
+<script src="js/license.js"></script>
 <script src="js/parse.js"></script>
 <script src="js/sources.js"></script>
 <script src="js/player.js"></script>
