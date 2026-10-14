@@ -69,15 +69,15 @@ var License = (function () {
 
   function activate() {
     var key = norm($('lic-key').value);
-    if (key.length < 8) return msg('Vul je licentiecode in · Enter your license code');
-    msg('Controleren… · Checking…', true);
+    if (key.length < 8) return msg(T('Vul je licentiecode in'));
+    msg(T('Controleren…'), true);
     check(key).then(function (r) {
       if (r && r.valid) done({ key: key, plan: r.plan, expires_at: r.expires_at || null });
       else msg(r && r.reason === 'expired'
-        ? 'Deze licentie is verlopen · This license has expired'
-        : 'Ongeldige licentiecode · Invalid license code');
+        ? T('Deze licentie is verlopen')
+        : T('Ongeldige licentiecode'));
     }).catch(function () {
-      msg('Geen verbinding met de server · Cannot reach server');
+      msg(T('Geen verbinding met de server'));
     });
   }
 
@@ -116,10 +116,10 @@ var License = (function () {
       if (age < RECHECK) { cb(); revalidate(v); return; }
       check(v.key).then(function (r) {
         if (r && r.valid) { v.plan = r.plan; v.expires_at = r.expires_at || null; v.checked = Date.now(); save(v); cb(); }
-        else { clear(); onOk = cb; showScreen(r && r.reason === 'expired' ? 'Je licentie is verlopen · Your license has expired' : ''); }
+        else { clear(); onOk = cb; showScreen(r && r.reason === 'expired' ? T('Je licentie is verlopen') : ''); }
       }).catch(function () {
         if (age < GRACE) cb();
-        else { onOk = cb; showScreen('Geen verbinding met de server · Cannot reach server'); }
+        else { onOk = cb; showScreen(T('Geen verbinding met de server')); }
       });
       return;
     }

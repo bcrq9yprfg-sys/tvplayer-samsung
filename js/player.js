@@ -8,7 +8,16 @@ var Player = (function () {
   var LANG3 = { dut: 'nl', nld: 'nl', eng: 'en', ara: 'ar', tur: 'tr', fre: 'fr', fra: 'fr', ger: 'de', deu: 'de',
     spa: 'es', por: 'pt', ita: 'it', pol: 'pl', rus: 'ru' };
 
+  /* Samsung-eis: geen screensaver tijdens afspelen */
+  function screenSaver(on) {
+    try {
+      webapis.appcommon.setScreenSaver(on ? webapis.appcommon.AppCommonScreenSaverState.SCREEN_SAVER_ON
+                                          : webapis.appcommon.AppCommonScreenSaverState.SCREEN_SAVER_OFF);
+    } catch (e) { /* browser */ }
+  }
+
   function stop() {
+    screenSaver(true);
     if (hasAV) {
       try { webapis.avplay.stop(); } catch (e) {}
       try { webapis.avplay.close(); } catch (e) {}
@@ -23,7 +32,8 @@ var Player = (function () {
 
   function play(url) {
     stop();
-    onStatus('Laden…');
+    screenSaver(false);
+    onStatus(T('Laden…'));
     if (hasAV) {
       avEl.style.display = 'block';
       try {
@@ -31,9 +41,9 @@ var Player = (function () {
         webapis.avplay.setDisplayRect(0, 0, 1920, 1080);
         webapis.avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
         webapis.avplay.setListener({
-          onbufferingstart: function () { onStatus('Bufferen…'); },
+          onbufferingstart: function () { onStatus(T('Bufferen…')); },
           onbufferingcomplete: function () { onStatus(''); },
-          onerror: function (e) { onStatus('Fout: ' + e); },
+          onerror: function (e) { onStatus(T('Fout: ') + e); },
           onstreamcompleted: function () { onStatus(''); onEnd(); },
           onsubtitlechange: function (duration, text) { onSub(String(text || '').replace(/<[^>]+>/g, '')); }
         });
@@ -42,19 +52,19 @@ var Player = (function () {
             try { webapis.avplay.setSilentSubtitle(true); } catch (e) {}
             webapis.avplay.play(); onStatus(''); onReady();
           },
-          function (e) { onStatus('Kan niet afspelen: ' + (e && e.name || e)); }
+          function (e) { onStatus(T('Kan niet afspelen: ') + (e && e.name || e)); }
         );
       } catch (e) {
-        onStatus('Kan niet afspelen: ' + e.message);
+        onStatus(T('Kan niet afspelen: ') + e.message);
       }
     } else {
       vid.style.display = 'block';
       vid.src = url;
       var first = true;
       vid.onplaying = function () { onStatus(''); if (first) { first = false; onReady(); } };
-      vid.onwaiting = function () { onStatus('Bufferen…'); };
+      vid.onwaiting = function () { onStatus(T('Bufferen…')); };
       vid.onended = function () { onEnd(); };
-      vid.onerror = function () { onStatus('Browser kan stream niet afspelen'); };
+      vid.onerror = function () { onStatus(T('Browser kan stream niet afspelen')); };
       vid.play().catch(function () {});
     }
   }

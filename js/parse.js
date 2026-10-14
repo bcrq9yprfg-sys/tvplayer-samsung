@@ -19,7 +19,7 @@ var Parse = (function () {
   var EP_RE = /^(.*?)[\s._-]*S(\d{1,2})[\s._-]*E(\d{1,3})\b/i;
 
   function m3u(text) {
-    if (text.slice(0, 300).toUpperCase().indexOf('#EXTM3U') < 0) throw new Error('Geen geldig M3U-bestand');
+    if (text.slice(0, 300).toUpperCase().indexOf('#EXTM3U') < 0) throw new Error(T('Geen geldig M3U-bestand'));
     var live = [], movies = [], series = [], smap = {};
     var pos = 0, len = text.length, name = null, img = '', cat = '', n = 0;
     while (pos < len) {
@@ -49,7 +49,7 @@ var Parse = (function () {
           series.push(s);
         }
         var eps = s[10], list = eps[season] = eps[season] || [];
-        list.push({ episode_num: epn || list.length + 1, title: m ? 'Aflevering ' + epn : name, url: url, info: { movie_image: img } });
+        list.push({ episode_num: epn || list.length + 1, title: m ? T('Aflevering ') + epn : name, url: url, info: { movie_image: img } });
         s[5] = n;
       } else if (lu.indexOf('/movie/') > -1 || /\.(mp4|mkv|avi|mov)(\?|$)/.test(lu)) {
         movies.push([name, img, cat, url, 'm' + n, 0, n, yearOf(name)]);
@@ -62,7 +62,7 @@ var Parse = (function () {
       var e = series[i][10];
       for (var k in e) e[k].sort(function (a, b) { return a.episode_num - b.episode_num; });
     }
-    if (!live.length && !movies.length && !series.length) throw new Error('Playlist is leeg');
+    if (!live.length && !movies.length && !series.length) throw new Error(T('Playlist is leeg'));
     return { live: live, movies: movies, series: series };
   }
 

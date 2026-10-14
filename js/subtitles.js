@@ -32,11 +32,11 @@ var Subs = (function () {
         var j = null; try { j = JSON.parse(x.responseText); } catch (e) {}
         var m = j && (j.message || (j.errors && j.errors[0]));
         if (x.status === 401) m = 'OpenSubtitles: inlog of API-sleutel klopt niet';
-        if (x.status === 406 || x.status === 429) m = m || 'OpenSubtitles: daglimiet bereikt';
+        if (x.status === 406 || x.status === 429) m = m || T('OpenSubtitles: daglimiet bereikt');
         reject(new Error(m || 'OpenSubtitles gaf HTTP ' + x.status));
       };
-      x.onerror = function () { reject(new Error('Geen verbinding met OpenSubtitles')); };
-      x.ontimeout = function () { reject(new Error('OpenSubtitles reageert niet')); };
+      x.onerror = function () { reject(new Error(T('Geen verbinding met OpenSubtitles'))); };
+      x.ontimeout = function () { reject(new Error(T('OpenSubtitles reageert niet'))); };
       x.send(body ? JSON.stringify(body) : null);
     });
   }
@@ -97,13 +97,13 @@ var Subs = (function () {
 
   // q: { key, kind:'movie'|'episode', name, year, tmdb, parentTmdb, season, episode, lang }
   function find(q) {
-    if (!configured()) return Promise.reject(new Error('Vul eerst je OpenSubtitles-sleutel in (js/config.js)'));
+    if (!configured()) return Promise.reject(new Error(T('Online ondertitels niet beschikbaar')));
     var ck = 'sub|' + q.key + '|' + q.lang;
     return Sources.kvGet(ck).then(function (c) {
       if (c) return c;
       return search(q).then(function (list) {
         var best = pick(list);
-        if (!best) throw new Error('Geen ondertitels gevonden in ' + name(q.lang));
+        if (!best) throw new Error(T('Geen ondertitels gevonden in ') + name(q.lang));
         return download(best.attributes.files[0].file_id).then(function (text) {
           var v = { text: text, lang: q.lang, release: best.attributes.release || '' };
           Sources.kvPut(ck, v);

@@ -12,16 +12,16 @@ var Sources = (function () {
       if (onProgress) xhr.onprogress = function (e) { onProgress(e.loaded, e.lengthComputable ? e.total : 0); };
       xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.responseText);
-        else reject(new Error('Server gaf HTTP ' + xhr.status));
+        else reject(new Error(T('Server gaf HTTP ') + xhr.status));
       };
-      xhr.onerror = function () { reject(new Error('Geen verbinding met server')); };
-      xhr.ontimeout = function () { reject(new Error('Server reageert te traag (time-out)')); };
+      xhr.onerror = function () { reject(new Error(T('Geen verbinding met server'))); };
+      xhr.ontimeout = function () { reject(new Error(T('Server reageert te traag (time-out)'))); };
       xhr.send();
     });
   }
   function getJSON(url, t) {
     return httpGet(url, t).then(function (txt) {
-      try { return JSON.parse(txt); } catch (e) { throw new Error('Ongeldig antwoord van server'); }
+      try { return JSON.parse(txt); } catch (e) { throw new Error(T('Ongeldig antwoord van server')); }
     });
   }
   function arr(v) { return Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.keys(v).map(function (k) { return v[k]; }) : []); }

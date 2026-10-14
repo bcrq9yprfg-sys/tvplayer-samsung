@@ -283,3 +283,9 @@ button { min-width: 320px; }
 .sm-item.on::after { content: '✓'; margin-left: auto; color: var(--acc); font-weight: 800; }
 .sm-item.focused { border-color: #fff; background: #262a3a; }
 #osd-hint { font-size: 22px; color: var(--mut); padding: 6px 16px; border: 2px solid rgba(255,255,255,.2); border-radius: 20px; white-space: nowrap; }
+
+/* ---------- Netwerkmelding ---------- */
+#netbox { position: absolute; inset: 0; z-index: 100; background: rgba(0,0,0,.72);
+  display: flex; align-items: center; justify-content: center; }
+.netbox-in { background: #171a23; border: 4px solid var(--acc); border-radius: 18px;
+  padding: 48px 64px; font-size: 38px; max-width: 1100px; text-align: center; }

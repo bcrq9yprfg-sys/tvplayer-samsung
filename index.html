@@ -13,11 +13,11 @@
 <div id="license" class="screen hidden">
   <div class="logo big">AM <span>IPTV</span></div>
   <h1>Licentie activeren</h1>
-  <p class="hint">Voer de licentiecode in uit je account op am-iptv-production.up.railway.app<br>Enter the license code from your account</p>
+  <p class="hint">Voer de licentiecode in uit je account op am-iptv-production.up.railway.app</p>
   <div class="form">
-    <input class="focusable" id="lic-key" type="text" autocomplete="off" placeholder="Licentiecode / License code">
+    <input class="focusable" id="lic-key" type="text" autocomplete="off" placeholder="Licentiecode">
   </div>
-  <button class="focusable primary" id="lic-btn">Activeren · Activate</button>
+  <button class="focusable primary" id="lic-btn">Activeren</button>
   <p id="lic-msg" class="msg"></p>
   <p class="hint">Pijltjes: navigeren · OK: kiezen · Terug: afsluiten</p>
 </div>
@@ -126,7 +126,9 @@
 
 <div id="loading" class="hidden"><div class="spinner"></div><div id="loading-text"></div></div>
 <div id="toast" class="hidden"></div>
+<div id="netbox" class="hidden"><div class="netbox-in">Geen netwerkverbinding. Controleer je internet.</div></div>
 
+<script src="js/i18n.js"></script>
 <script src="js/config.js"></script>
 <script src="js/license.js"></script>
 <script src="js/parse.js"></script>

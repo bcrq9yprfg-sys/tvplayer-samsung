@@ -9,7 +9,7 @@
     PLAY_PAUSE: 10252, PLAY: 415, PAUSE: 19, STOP: 413, REW: 412, FF: 417, CAPTION: 10221
   };
   var STORE = 'tvplayer.source';
-  var TABS = ['Home', 'Live TV', 'Films', 'Series', 'Zoeken', 'Favorieten', 'Playlist'];
+  var TABS = [T('Home'), T('Live TV'), T('Films'), T('Series'), T('Zoeken'), T('Favorieten'), T('Playlist')];
   var T_HOME = 0, T_LIVE = 1, T_MOVIES = 2, T_SERIES = 3, T_SEARCH = 4, T_FAV = 5, T_PLAYLIST = 6;
   var ROW_MAX = 40, CAT_ROW_MAX = 150, CAT_MAX = 80, SEARCH_MAX = 60;
   var STEP = { poster: 244, live: 344, top: 344 };   // kaartbreedte + tussenruimte
@@ -90,7 +90,7 @@
 
   function openSource(src, force) {
     msg('');
-    loading(true, 'Laden…');
+    loading(true, T('Laden…'));
     if (force) { fetchFresh(src, false); return; }
     Sources.cacheGet(srcKey(src)).then(function (c) {
       if (c && (c.live.length || c.movies.length || c.series.length)) {
@@ -103,9 +103,9 @@
 
   function fetchFresh(src, silent) {
     function fail(e) {
-      if (silent) { toast('Verversen mislukt: ' + (e && e.message || 'fout')); return; }
+      if (silent) { toast(T('Verversen mislukt: ') + (e && e.message || 'fout')); return; }
       loading(false); show('setup');
-      msg(e && e.message || 'Laden mislukt'); setupFocus(S.focusIdx);
+      msg(e && e.message || T('Laden mislukt')); setupFocus(S.focusIdx);
     }
     function apply(raw) {
       save(src);
@@ -118,7 +118,7 @@
     if (src.mode !== 'xtream') {
       Sources.loadM3U(src.url, function (l, t) {
         if (silent) return;
-        loading(true, l < 0 ? 'Verwerken…' : 'Playlist downloaden… ' + mb(l) + (t ? ' / ' + mb(t) : ''));
+        loading(true, l < 0 ? T('Verwerken…') : T('Playlist downloaden… ') + mb(l) + (t ? ' / ' + mb(t) : ''));
       }).then(apply).catch(fail);
       return;
     }
@@ -127,17 +127,17 @@
     xt.auth().then(function () {
       var raw = { live: [], movies: [], series: [] }, got = { l: 0, m: 0, s: 0 };
       function status() {
-        if (!silent) loading(true, 'Laden…  zenders ' + mb(got.l) + '  ·  films ' + mb(got.m) + '  ·  series ' + mb(got.s));
+        if (!silent) loading(true, T('Laden…  zenders ') + mb(got.l) + T('  ·  films ') + mb(got.m) + T('  ·  series ') + mb(got.s));
       }
       status();
       function part(fn, key, k, label) {
         return fn(function (l) { got[k] = l; status(); })
           .then(function (list) { raw[key] = list; })
-          .catch(function () { if (!silent) toast(label + ' laden mislukt'); });
+          .catch(function () { if (!silent) toast(label + T(' laden mislukt')); });
       }
-      Promise.all([part(xt.live, 'live', 'l', 'Zenders'), part(xt.movies, 'movies', 'm', 'Films'), part(xt.series, 'series', 's', 'Series')])
+      Promise.all([part(xt.live, 'live', 'l', T('Zenders')), part(xt.movies, 'movies', 'm', T('Films')), part(xt.series, 'series', 's', T('Series'))])
         .then(function () {
-          if (!raw.live.length && !raw.movies.length && !raw.series.length) return fail(new Error('Geen inhoud gevonden'));
+          if (!raw.live.length && !raw.movies.length && !raw.series.length) return fail(new Error(T('Geen inhoud gevonden')));
           apply(raw);
         });
     }).catch(fail);
@@ -179,9 +179,9 @@
       : { mode: 'm3u', url: $('m3u-url').value.trim() };
     if (src.mode === 'm3u') {
       if (src.url && !/^https?:\/\//i.test(src.url)) src.url = 'http://' + src.url;
-      if (!/^https?:\/\/.+/i.test(src.url)) return msg('Vul een geldige URL in');
+      if (!/^https?:\/\/.+/i.test(src.url)) return msg(T('Vul een geldige URL in'));
     }
-    if (src.mode === 'xtream' && (!src.server || !src.user || !src.pass)) return msg('Vul alle velden in');
+    if (src.mode === 'xtream' && (!src.server || !src.user || !src.pass)) return msg(T('Vul alle velden in'));
     openSource(src, true);
   }
   function setupKey(code) {
@@ -219,7 +219,7 @@
      HOME, MAPPEN, FAVORIETEN
      ====================================================== */
   var KINDS = { 1: 'live', 2: 'movie', 3: 'series' };
-  var KIND_LABEL = { live: 'Live TV', movie: 'Films', series: 'Series' };
+  var KIND_LABEL = { live: T('Live TV'), movie: T('Films'), series: T('Series') };
   var GRID_COLS = { live: 5, movie: 7, series: 7 };
   var GRID_ROW_H = { live: 232, movie: 358, series: 358 };
   var LIST_ROWS = 10;
@@ -277,27 +277,27 @@
     function add(title, items) { if (items && items.length) r.push({ title: title, items: items }); }
     if (S.tab === T_SEARCH) {
       if (S.query) {
-        add('Films', Sources.search(d.movies, S.query, SEARCH_MAX));
-        add('Series', Sources.search(d.series, S.query, SEARCH_MAX));
-        add('Live TV', Sources.search(d.live, S.query, SEARCH_MAX));
+        add(T('Films'), Sources.search(d.movies, S.query, SEARCH_MAX));
+        add(T('Series'), Sources.search(d.series, S.query, SEARCH_MAX));
+        add(T('Live TV'), Sources.search(d.live, S.query, SEARCH_MAX));
       }
       return r;
     }
     var recent = histItems('t', 20), most = histItems('n', 20);
-    add('Verder kijken', recent.filter(function (x) { return x.kind !== 'live'; }));
+    add(T('Verder kijken'), recent.filter(function (x) { return x.kind !== 'live'; }));
     var mostLive = most.filter(function (x) { return x.kind === 'live'; });
-    add('Meest bekeken · Live TV', mostLive);
+    add(T('Meest bekeken · Live TV'), mostLive);
     ['live', 'movie', 'series'].forEach(function (kind) {
       catsOf(kind).forEach(function (g) {
         if (isFav(kind, g.name)) add(g.name, g.items.slice(0, ROW_MAX));
       });
     });
-    if (v.topMovies.length >= 5) r.push({ title: 'Top 10 · Films', items: v.topMovies.slice(0, 10), top: true });
-    if (v.topSeries.length >= 5) r.push({ title: 'Top 10 · Series', items: v.topSeries.slice(0, 10), top: true });
+    if (v.topMovies.length >= 5) r.push({ title: T('Top 10 · Films'), items: v.topMovies.slice(0, 10), top: true });
+    if (v.topSeries.length >= 5) r.push({ title: T('Top 10 · Series'), items: v.topSeries.slice(0, 10), top: true });
     if (r.length < 3) {
-      add('Live TV', d.live.slice(0, ROW_MAX));
-      add('Nieuw · Films', v.newMovies);
-      add('Nieuw · Series', v.newSeries);
+      add(T('Live TV'), d.live.slice(0, ROW_MAX));
+      add(T('Nieuw · Films'), v.newMovies);
+      add(T('Nieuw · Series'), v.newSeries);
     }
     return r;
   }
@@ -354,8 +354,8 @@
         '<span class="count">' + row.items.length + '</span></h3><div class="track"></div></section>';
     });
     if (!S.rows.length) {
-      html = '<div class="empty">' + (S.tab === T_SEARCH ? (S.query ? 'Niets gevonden voor “' + esc(S.query) + '”' : 'Druk OK om te typen') :
-        'Nog niets hier. Kies favorieten bij Favorieten.') + '</div>';
+      html = '<div class="empty">' + (S.tab === T_SEARCH ? (S.query ? T('Niets gevonden voor “') + esc(S.query) + '”' : T('Druk OK om te typen')) :
+        T('Nog niets hier. Kies favorieten bij Favorieten.')) + '</div>';
       if (S.zone === 'rows') S.zone = S.tab === T_SEARCH ? 'search' : 'nav';
     }
     $('rows').innerHTML = html;
@@ -384,7 +384,7 @@
     loadFav();
     S.tab = T_HOME; S.nav = T_HOME; S.zone = 'rows';
     show('home');
-    if (!S.fav) { selectTab(T_FAV); toast('Kies je favoriete mappen: OK = aan/uit. Daarna naar Home.'); return; }
+    if (!S.fav) { selectTab(T_FAV); toast(T('Kies je favoriete mappen: OK = aan/uit. Daarna naar Home.')); return; }
     renderHome(true);
   }
   function refreshHome() { if (S.db && (S.screen === 'home' || S.screen === 'detail' || S.screen === 'player')) renderHome(false); }
@@ -420,7 +420,7 @@
     if (it.kind === 'live') {
       m.push('<span class="live-dot">● LIVE</span>');
       if (it.cat) m.push(esc(it.cat));
-      if (it.num) m.push('Kanaal ' + it.num);
+      if (it.num) m.push(T('Kanaal ') + it.num);
     } else {
       m.push('<span class="kind">' + (it.kind === 'series' ? 'SERIE' : 'FILM') + '</span>');
       if (it.year) m.push(esc(it.year));
@@ -432,20 +432,20 @@
   }
   function greeting() {
     var h = new Date().getHours();
-    return h < 6 ? 'Goedenacht' : h < 12 ? 'Goedemorgen' : h < 18 ? 'Goedemiddag' : 'Goedenavond';
+    return h < 6 ? T('Goedenacht') : h < 12 ? T('Goedemorgen') : h < 18 ? T('Goedemiddag') : T('Goedenavond');
   }
   function setHero(it) {
     var art = $('hero-art'), pi = $('hero-poster');
     if (!it) {
-      $('hero-meta').innerHTML = ''; $('hero-title').textContent = greeting(); $('hero-plot').textContent = 'Wat wil je kijken?';
+      $('hero-meta').innerHTML = ''; $('hero-title').textContent = greeting(); $('hero-plot').textContent = T('Wat wil je kijken?');
       $('hero-hint').innerHTML = ''; art.className = ''; setBg($('hero-bg'), '', 'cover'); return;
     }
     $('hero-meta').innerHTML = metaHtml(it);
     $('hero-title').textContent = it.name;
-    $('hero-plot').textContent = it.plot || (it.kind === 'live' ? 'Nu live op ' + (it.cat || 'tv') : '');
-    $('hero-hint').innerHTML = '<span class="pill primary">▶  OK om te ' + (it.kind === 'live' ? 'kijken' : 'openen') + '</span>' +
-      (it.kind === 'series' ? '<span class="pill">Seizoenen &amp; afleveringen</span>' : '') +
-      (it.kind === 'live' && it.num ? '<span class="pill">Kanaal ' + it.num + '</span>' : '');
+    $('hero-plot').textContent = it.plot || (it.kind === 'live' ? T('Nu live op ') + (it.cat || 'tv') : '');
+    $('hero-hint').innerHTML = '<span class="pill primary">' + T(it.kind === 'live' ? T('▶  OK om te kijken') : T('▶  OK om te openen')) + '</span>' +
+      (it.kind === 'series' ? '<span class="pill">' + esc(T('Seizoenen & afleveringen')) + '</span>' : '') +
+      (it.kind === 'live' && it.num ? '<span class="pill">' + T('Kanaal ') + it.num + '</span>' : '');
     var hasBd = imgOk(it.backdrop);
     setBg($('hero-bg'), hasBd ? Sources.sized(it.backdrop, 'w1280') : '', 'cover');
     var showArt = !hasBd && imgOk(it.img);
@@ -498,14 +498,14 @@
     }).join('') : '';
     if (fav) {
       $('b-title').textContent = '';
-      $('b-sub').textContent = 'OK = favoriet aan/uit · ' + favList(kind).length + ' gekozen';
+      $('b-sub').textContent = T('OK = favoriet aan/uit · ') + favList(kind).length + T(' gekozen');
       st.mode = 'list';
     } else if (st.mode === 'list') {
       $('b-title').textContent = KIND_LABEL[kind];
-      $('b-sub').textContent = cats.length + ' mappen';
+      $('b-sub').textContent = cats.length + T(' mappen');
     } else {
       $('b-title').textContent = st.cat.name;
-      $('b-sub').textContent = st.cat.items.length + ' titels · Terug = mappen';
+      $('b-sub').textContent = st.cat.items.length + T(' titels · Terug = mappen');
     }
     $('b-list').style.display = st.mode === 'list' ? 'block' : 'none';
     $('b-grid').style.display = st.mode === 'grid' ? 'block' : 'none';
@@ -531,7 +531,7 @@
           '<span class="fs">' + (!fav && on ? '★' : '') + '</span></div>';
       }
       $('b-list').innerHTML = cats.length ? html + '<div class="b-pos">' + (st.idx + 1) + ' / ' + cats.length + '</div>'
-        : '<div class="empty-b">Geen mappen</div>';
+        : '<div class="empty-b">' + T('Geen mappen') + '</div>';
       return;
     }
     // raster: alleen zichtbare rijen tekenen; bij links/rechts alleen focus verplaatsen
@@ -643,6 +643,7 @@
     else if (KINDS[i]) S.zone = bState().mode;
     else S.zone = 'rows';
     renderHome(true);
+    navFocus();   // menu-markering weghalen: maar één element tegelijk in focus (Samsung-eis)
     if (i === T_SEARCH && !S.query) qInput.focus();
   }
 
@@ -756,20 +757,20 @@
     d.btns = [];
     if (it.kind === 'series') {
       var ep = curEps()[S.dEp];
-      if (ep) d.btns.push({ label: '▶  Afspelen  S' + d.seasons[S.dSeason] + ' · A' + (ep.episode_num || S.dEp + 1), act: 'ep' });
-    } else d.btns.push({ label: '▶  Afspelen', act: 'play' });
-    d.btns.push({ label: 'Ondertitels: ' + subLabel(getSubPref(prefKeyOf(it))), act: 'subs' });
-    d.btns.push({ label: 'Terug', act: 'back' });
+      if (ep) d.btns.push({ label: T('▶  Afspelen  S') + d.seasons[S.dSeason] + T(' · A') + (ep.episode_num || S.dEp + 1), act: 'ep' });
+    } else d.btns.push({ label: T('▶  Afspelen'), act: 'play' });
+    if (Subs.configured()) d.btns.push({ label: T('Ondertitels: ') + subLabel(getSubPref(prefKeyOf(it))), act: 'subs' });
+    d.btns.push({ label: T('Terug'), act: 'back' });
     S.dBtn = clamp(S.dBtn, d.btns.length);
     $('d-btns').innerHTML = d.btns.map(function (b) {
       return '<div class="btn' + (b.act !== 'back' ? ' primary' : '') + '">' + esc(b.label) + '</div>';
     }).join('');
 
-    $('d-status').textContent = d.loading ? 'Afleveringen laden…' : d.error ? 'Afleveringen laden mislukt' :
-      (it.kind === 'series' && !d.seasons.length ? 'Geen afleveringen gevonden' : '');
+    $('d-status').textContent = d.loading ? T('Afleveringen laden…') : d.error ? T('Afleveringen laden mislukt') :
+      (it.kind === 'series' && !d.seasons.length ? T('Geen afleveringen gevonden') : '');
 
     $('d-seasons').innerHTML = d.seasons.length > 1 ? d.seasons.map(function (s) {
-      return '<div class="chip">Seizoen ' + esc(s) + '</div>';
+      return '<div class="chip">' + T('Seizoen ') + esc(s) + '</div>';
     }).join('') : '';
     renderEps();
     detailFocus();
@@ -779,7 +780,7 @@
     var eps = curEps(), d = S.detail;
     if (!eps.length) {
       $('d-eps').innerHTML = d.more.length && !d.loading
-        ? '<h3>Meer zoals dit</h3><div class="track" id="d-more">' + d.more.map(cardHtml).join('') + '</div>' : '';
+        ? '<h3>' + T('Meer zoals dit') + '</h3><div class="track" id="d-more">' + d.more.map(cardHtml).join('') + '</div>' : '';
       if ($('d-more')) showImgs($('d-more'));
       return;
     }
@@ -788,7 +789,7 @@
       var inf = e.info || {};
       var img = imgOk(inf.movie_image) ? '<img src="' + esc(Sources.sized(inf.movie_image, 'w300')) + '" alt="">' : '';
       return '<div class="card ep"><div class="ep-img">' + img + '<span class="ep-n">' + esc(e.episode_num || i + 1) + '</span></div>' +
-        '<div class="ep-t">' + esc(e.title || ('Aflevering ' + (e.episode_num || i + 1))) + '</div>' +
+        '<div class="ep-t">' + esc(e.title || (T('Aflevering ') + (e.episode_num || i + 1))) + '</div>' +
         (inf.duration ? '<div class="ep-d">' + esc(inf.duration) + '</div>' : '') + '</div>';
     }).join('') + '</div>';
   }
@@ -829,7 +830,7 @@
     var season = d.seasons[S.dSeason];
     var url = ep.url || (S.xt && S.xt.episodeUrl(ep));
     var epn = ep.episode_num || i + 1;
-    playVod(url, d.it.name, 'S' + season + ' · A' + epn + (ep.title && ep.title !== d.it.name ? ' · ' + ep.title : ''),
+    playVod(url, d.it.name, 'S' + season + T(' · A') + epn + (ep.title && ep.title !== d.it.name ? ' · ' + ep.title : ''),
       i + 1 < eps.length ? function () { playEpisode(i + 1); } : null,
       { key: 'e|' + d.it.id + '|' + season + '|' + epn, prefKey: prefKeyOf(d.it), kind: 'episode', name: d.it.name,
         parentTmdb: d.it.tmdb, season: season, episode: epn });
@@ -969,7 +970,7 @@
       var n = parseInt(S.numBuf, 10);
       S.numBuf = '';
       if (n >= 1 && n <= all.length) playLive(all, n - 1);
-      else osd('Kanaal ' + n + ' bestaat niet');
+      else osd(T('Kanaal ') + n + T(' bestaat niet'));
     }, 1500);
   }
 
@@ -993,7 +994,7 @@
       case KEY.FF: if (!p.live) { Player.seek(60000); osd(); } break;
       case KEY.ENTER: case KEY.PLAY_PAUSE: case KEY.PLAY: case KEY.PAUSE:
         if (code === KEY.ENTER && $('osd').classList.contains('hidden')) { osd(); break; }
-        osd(Player.togglePause() ? 'Gepauzeerd' : '');
+        osd(Player.togglePause() ? T('Gepauzeerd') : '');
         break;
       case KEY.BACK: case KEY.STOP: leavePlayer(); break;
       default: return false;
@@ -1012,7 +1013,7 @@
     var p = loadSubPrefs(); p.t[k] = v; p.def = v;
     try { localStorage.setItem(SUBP, JSON.stringify(p)); } catch (e) {}
   }
-  function subLabel(v) { return v === 'off' ? 'Uit' : Subs.name(v); }
+  function subLabel(v) { return v === 'off' ? T('Uit') : Subs.name(v); }
 
   // Taal kiezen: eerst ingebouwd spoor in die taal, anders online zoeken
   function useSubLang(lang, auto) {
@@ -1020,26 +1021,26 @@
     if (!p || p.live) return;
     Subs.hide(); Player.muteEmbeddedSubs();
     p.subSel = 'off';
-    if (lang === 'off') { if (!auto) flash('Ondertitels uit'); return; }
+    if (lang === 'off') { if (!auto) flash(T('Ondertitels uit')); return; }
     var emb = Player.tracks().filter(function (t) { return t.type === 'TEXT' && t.lang === lang; })[0];
-    if (emb && Player.selectTrack('TEXT', emb.index)) { p.subSel = 'emb:' + emb.index; flash('Ondertitels: ' + Subs.name(lang) + ' (ingebouwd)'); return; }
+    if (emb && Player.selectTrack('TEXT', emb.index)) { p.subSel = 'emb:' + emb.index; flash(T('Ondertitels: ') + Subs.name(lang) + T(' (ingebouwd)')); return; }
     useOnline(lang, auto);
   }
   function useOnline(lang, auto) {
     var p = S.play;
-    if (!p || !p.meta) { if (!auto) flash('Geen titelgegevens om ondertitels te zoeken'); return; }
-    if (!Subs.configured()) { if (!auto) flash('Online ondertitels: vul eerst je OpenSubtitles-sleutel in (js/config.js)'); return; }
+    if (!p || !p.meta) { if (!auto) flash(T('Geen titelgegevens om ondertitels te zoeken')); return; }
+    if (!Subs.configured()) { if (!auto) flash(T('Online ondertitels niet beschikbaar')); return; }
     var q = {}; for (var k in p.meta) q[k] = p.meta[k];
     q.lang = lang;
-    flash('Ondertitels zoeken: ' + Subs.name(lang) + '…');
+    flash(T('Ondertitels zoeken: ') + Subs.name(lang) + '…');
     Subs.find(q).then(function (v) {
       if (S.play !== p) return;
       var cues = Subs.parse(v.text);
-      if (!cues.length) throw new Error('Ondertitelbestand is leeg');
+      if (!cues.length) throw new Error(T('Ondertitelbestand is leeg'));
       Player.muteEmbeddedSubs();
       Subs.showCues(cues);
       p.subSel = 'online:' + lang;
-      flash('Ondertitels: ' + Subs.name(lang) + (v.release ? ' · ' + v.release : ''));
+      flash(T('Ondertitels: ') + Subs.name(lang) + (v.release ? ' · ' + v.release : ''));
       if (S.sm) renderSubMenu();
     }).catch(function (e) { if (S.play === p) flash(e.message); });
   }
@@ -1054,22 +1055,22 @@
 
   /* ---------- Menu in de speler ---------- */
   function subMenuItems() {
-    var p = S.play, items = [{ label: 'Uit', act: 'off', on: p.subSel === 'off' }], tr = Player.tracks();
+    var p = S.play, items = [{ label: T('Uit'), act: 'off', on: p.subSel === 'off' }], tr = Player.tracks();
     tr.filter(function (t) { return t.type === 'TEXT'; }).forEach(function (t, i) {
-      items.push({ label: 'Ingebouwd · ' + (t.lang ? Subs.name(t.lang) : 'spoor ' + (i + 1)), act: 'emb', index: t.index, lang: t.lang, on: p.subSel === 'emb:' + t.index });
+      items.push({ label: T('Ingebouwd · ') + (t.lang ? Subs.name(t.lang) : T('spoor ') + (i + 1)), act: 'emb', index: t.index, lang: t.lang, on: p.subSel === 'emb:' + t.index });
     });
-    if (!p.live) {
+    if (!p.live && Subs.configured()) {
       Subs.langs().forEach(function (l) {
         items.push({ label: 'Online · ' + Subs.name(l), act: 'online', lang: l, on: p.subSel === 'online:' + l });
       });
     }
     if (Subs.active()) {
-      items.push({ label: 'Ondertitels 0,5 s eerder', act: 'shift', ms: 500 });
-      items.push({ label: 'Ondertitels 0,5 s later', act: 'shift', ms: -500 });
+      items.push({ label: T('Ondertitels 0,5 s eerder'), act: 'shift', ms: 500 });
+      items.push({ label: T('Ondertitels 0,5 s later'), act: 'shift', ms: -500 });
     }
     var audio = tr.filter(function (t) { return t.type === 'AUDIO'; });
     if (audio.length > 1) audio.forEach(function (t, i) {
-      items.push({ label: 'Audio · ' + (t.lang ? Subs.name(t.lang) : 'spoor ' + (i + 1)), act: 'audio', index: t.index, on: p.audioSel === t.index });
+      items.push({ label: T('Audio · ') + (t.lang ? Subs.name(t.lang) : T('spoor ') + (i + 1)), act: 'audio', index: t.index, on: p.audioSel === t.index });
     });
     return items;
   }
@@ -1086,7 +1087,7 @@
     $('sm-list').innerHTML = S.sm.items.map(function (it, i) {
       return '<div class="sm-item' + (i === S.sm.idx ? ' focused' : '') + (it.on ? ' on' : '') + '">' + esc(it.label) + '</div>';
     }).join('');
-    $('sm-hint').textContent = Subs.configured() ? 'Keuze wordt per film/serie onthouden' : 'Online: OpenSubtitles-sleutel nodig (js/config.js)';
+    $('sm-hint').textContent = T('Keuze wordt per film/serie onthouden');
     var sel = $('sm-list').children[S.sm.idx];
     $('sm-list').style.transform = 'translateY(' + (-Math.max(0, S.sm.idx - 8) * 74) + 'px)';
   }
@@ -1097,7 +1098,7 @@
       case KEY.DOWN: sm.idx = Math.min(sm.items.length - 1, sm.idx + 1); break;
       case KEY.ENTER:
         if (!it) break;
-        if (it.act === 'shift') { var o = Subs.shift(it.ms); flash('Ondertitel-sync: ' + (o > 0 ? '+' : '') + (o / 1000).toFixed(1) + ' s'); break; }
+        if (it.act === 'shift') { var o = Subs.shift(it.ms); flash(T('Ondertitel-sync: ') + (o > 0 ? '+' : '') + (o / 1000).toFixed(1) + ' s'); break; }
         if (it.act === 'audio') { Player.selectTrack('AUDIO', it.index); p.audioSel = it.index; flash(it.label); break; }
         if (it.act === 'off') { useSubLang('off'); if (p.meta) setSubPref(p.meta.prefKey, 'off'); }
         if (it.act === 'emb') {
@@ -1118,6 +1119,7 @@
   document.addEventListener('keydown', function (e) {
     var code = e.keyCode;
     if (window.License && License.active()) { if (License.key(code)) e.preventDefault(); return; }
+    if (netDown) { if (code === KEY.BACK || code === KEY.ESC || code === KEY.BACKSPACE) exitApp(); e.preventDefault(); return; }
     var inInput = document.activeElement && document.activeElement.tagName === 'INPUT';
     if (code === KEY.ESC || (code === KEY.BACKSPACE && !inInput)) code = KEY.BACK;
     if (!$('loading').classList.contains('hidden')) { e.preventDefault(); return; }
@@ -1136,6 +1138,29 @@
     var i = setupFocusables().indexOf(t);
     if (i > -1) { setupFocus(i); setupKey(KEY.ENTER); }
   });
+
+  /* ---------- Netwerk: melding bij wegvallen (Samsung-eis) ---------- */
+  var netDown = false;
+  function netLost() {
+    if (netDown) return; netDown = true;
+    loading(false);
+    $('netbox').classList.remove('hidden');
+  }
+  function netBack() {
+    if (!netDown) return; netDown = false;
+    $('netbox').classList.add('hidden');
+    toast(T('Verbinding hersteld'));
+    if (S.screen === 'player' && S.play) { if (S.play.live) startLive(); }
+  }
+  window.addEventListener('offline', netLost);
+  window.addEventListener('online', netBack);
+  try {
+    webapis.network.addNetworkStateChangeListener(function (v) {
+      var st = webapis.network.NetworkState;
+      if (v === st.GATEWAY_DISCONNECTED || v === st.LAN_CABLE_DETACHED || v === st.WIFI_MODULE_STATE_DETACHED) netLost();
+      else if (v === st.GATEWAY_CONNECTED || v === st.LAN_CABLE_ATTACHED) netBack();
+    });
+  } catch (e) { /* browser */ }
 
   /* ---------- Start (pas na geldige licentie) ---------- */
   renderNav();
