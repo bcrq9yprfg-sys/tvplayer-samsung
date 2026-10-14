@@ -1,0 +1,75 @@
+{
+  "projectDir": "/Users/ahmed/Documents/tvplayer",
+  "timestamp": "2026-10-14T10:59:17.614Z",
+  "hashAlgorithm": "xxh3-128",
+  "input": {
+    "index.html": {
+      "hash": "605f9bd3772b52b984c5e2b3bb84a3bf"
+    },
+    "css/style.css": {
+      "hash": "ee5b3bc8324c48493c2bd7030f007302"
+    },
+    "js/app.js": {
+      "hash": "51dfad722d392c07adc5d41f88b4d18e"
+    },
+    "js/player.js": {
+      "hash": "863e7ea323bec0658d8e8f64c73b9e04"
+    },
+    "js/sources.js": {
+      "hash": "c64af62a38c198028fea41da7fc26672"
+    },
+    "config.xml": {
+      "hash": "b554e504f8bf0a6b57a07a38b921ccb8"
+    },
+    "js/parse.js": {
+      "hash": "b484d3c32690804fadff572c58b22849"
+    },
+    "js/config.js": {
+      "hash": "4e1b08c212b55e7cfbf279816f2ef7a6"
+    },
+    "js/subtitles.js": {
+      "hash": "645295c8ba94f0939eb0c226602487ae"
+    }
+  },
+  "output": {
+    "Debug/projects/tvplayer/.vscode/settings.json": {
+      "hash": "ece1e83bc81b301da009d223c3b508cb"
+    },
+    "Debug/projects/tvplayer/config.xml": {
+      "hash": "b554e504f8bf0a6b57a07a38b921ccb8"
+    },
+    "Debug/projects/tvplayer/css/style.css": {
+      "hash": "ee5b3bc8324c48493c2bd7030f007302"
+    },
+    "Debug/projects/tvplayer/icon.png": {
+      "hash": "c9df75c5ef0e06485fdd31fbed7f7325"
+    },
+    "Debug/projects/tvplayer/index.html": {
+      "hash": "605f9bd3772b52b984c5e2b3bb84a3bf"
+    },
+    "Debug/projects/tvplayer/js/app.js": {
+      "hash": "51dfad722d392c07adc5d41f88b4d18e"
+    },
+    "Debug/projects/tvplayer/README.md": {
+      "hash": "393fa9e2badbac59e1182bd4a1701f2e"
+    },
+    "Debug/projects/tvplayer/js/player.js": {
+      "hash": "863e7ea323bec0658d8e8f64c73b9e04"
+    },
+    "Debug/projects/tvplayer/js/sources.js": {
+      "hash": "c64af62a38c198028fea41da7fc26672"
+    },
+    "Debug/projects/tvplayer/test.m3u": {
+      "hash": "38cf142e645ed5f08ac45414b9c70580"
+    },
+    "Debug/projects/tvplayer/js/parse.js": {
+      "hash": "b484d3c32690804fadff572c58b22849"
+    },
+    "Debug/projects/tvplayer/js/config.js": {
+      "hash": "4e1b08c212b55e7cfbf279816f2ef7a6"
+    },
+    "Debug/projects/tvplayer/js/subtitles.js": {
+      "hash": "645295c8ba94f0939eb0c226602487ae"
+    }
+  }
+}

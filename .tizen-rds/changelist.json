@@ -1,0 +1,43 @@
+{
+  "projectDir": "/Users/ahmed/Documents/tvplayer",
+  "deploys": {
+    "next": [
+      {
+        "path": "Debug/projects/tvplayer/config.xml",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/index.html",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/css/style.css",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/js/app.js",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/js/player.js",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/js/sources.js",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/js/parse.js",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/js/config.js",
+        "type": "add"
+      },
+      {
+        "path": "Debug/projects/tvplayer/js/subtitles.js",
+        "type": "add"
+      }
+    ]
+  }
+}

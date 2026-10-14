@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>TVPlayer</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="$WEBAPIS/webapis/webapis.js"></script>
+</head>
+<body>
+
+<!-- Playlist instellen -->
+<div id="setup" class="screen">
+  <div class="logo big">TV<span>Player</span></div>
+  <h1>Playlist toevoegen</h1>
+  <div class="tabs">
+    <button class="focusable tab active" data-mode="m3u">M3U-link</button>
+    <button class="focusable tab" data-mode="xtream">Xtream login</button>
+  </div>
+  <div id="form-m3u" class="form">
+    <input class="focusable" id="m3u-url" type="url" placeholder="https://voorbeeld.nl/playlist.m3u">
+  </div>
+  <div id="form-xtream" class="form hidden">
+    <input class="focusable" id="xt-server" type="url" placeholder="http://server:poort">
+    <input class="focusable" id="xt-user" type="text" placeholder="Gebruikersnaam">
+    <input class="focusable" id="xt-pass" type="password" placeholder="Wachtwoord">
+  </div>
+  <button class="focusable primary" id="btn-load">Laden</button>
+  <p id="setup-msg" class="msg"></p>
+  <p class="hint">Pijltjes: navigeren · OK: kiezen · Terug: vorige</p>
+</div>
+
+<!-- Startpagina -->
+<div id="home" class="screen hidden">
+  <div id="hero">
+    <div id="hero-bg" class="bg"></div>
+    <div class="hero-shade"></div>
+    <div id="hero-art"><img id="hero-poster" alt=""></div>
+    <div id="hero-info">
+      <div id="hero-meta" class="meta"></div>
+      <h1 id="hero-title"></h1>
+      <p id="hero-plot"></p>
+      <div id="hero-hint"></div>
+    </div>
+    <div id="searchbox">
+      <div class="sb-label">Zoeken</div>
+      <div id="q-wrap"><span class="sb-icon">⌕</span><input id="q" type="text" autocomplete="off" placeholder="Zoek films, series of zenders"></div>
+      <div class="sb-hint">OK: typen · Omlaag: resultaten</div>
+    </div>
+  </div>
+  <header id="topbar">
+    <div class="logo">TV<span>Player</span></div>
+    <nav id="nav"></nav>
+    <div id="clock"></div>
+  </header>
+  <div id="rows-wrap"><div id="rows"></div></div>
+  <div id="browse">
+    <div id="b-head">
+      <div id="b-seg"></div>
+      <h2 id="b-title"></h2>
+      <div id="b-sub"></div>
+    </div>
+    <div id="b-list"></div>
+    <div id="b-grid"></div>
+  </div>
+</div>
+
+<!-- Detailpagina film / serie -->
+<div id="detail" class="screen hidden">
+  <div id="d-bg" class="bg"></div>
+  <div class="d-shade"></div>
+  <div class="d-main">
+    <div class="d-poster-wrap"><img id="d-poster" alt=""></div>
+    <div class="d-info">
+      <div id="d-meta" class="meta"></div>
+      <h1 id="d-title"></h1>
+      <p id="d-plot"></p>
+      <div id="d-extra"></div>
+      <div id="d-btns" class="btns"></div>
+      <div id="d-status" class="status"></div>
+    </div>
+  </div>
+  <div id="d-seasons" class="chips"></div>
+  <div id="d-eps" class="eps-wrap"></div>
+</div>
+
+<!-- Speler -->
+<div id="player" class="screen hidden">
+  <object id="avplayer" type="application/avplayer"></object>
+  <video id="html5video"></video>
+  <div id="subs"></div>
+  <div id="submenu" class="hidden">
+    <div class="sm-title">Ondertitels &amp; audio</div>
+    <div id="sm-hint"></div>
+    <div id="sm-wrap"><div id="sm-list"></div></div>
+  </div>
+  <div id="osd" class="hidden">
+    <div class="osd-top">
+      <div id="osd-num"></div>
+      <div class="osd-titles">
+        <div id="osd-name"></div>
+        <div id="osd-sub"></div>
+      </div>
+      <div id="osd-status"></div>
+    </div>
+    <div id="osd-prog">
+      <div class="bar"><div id="osd-bar"></div></div>
+      <div id="osd-time"></div>
+      <div id="osd-hint">▲ Ondertitels &amp; audio</div>
+    </div>
+  </div>
+</div>
+
+<div id="loading" class="hidden"><div class="spinner"></div><div id="loading-text"></div></div>
+<div id="toast" class="hidden"></div>
+
+<script src="js/config.js"></script>
+<script src="js/parse.js"></script>
+<script src="js/sources.js"></script>
+<script src="js/player.js"></script>
+<script src="js/subtitles.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

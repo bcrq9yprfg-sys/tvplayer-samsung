@@ -1,0 +1,4 @@
+{
+  "tizentv.hostPCAddress": "192.168.2.6",
+  "tizentv.targetDeviceAddress": "192.168.2.3:26101"
+}
