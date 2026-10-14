@@ -1,18 +1,21 @@
-/* AM IPTV — licentiecontrole.
-   De app start pas na een geldige licentiecode van am-iptv-production.up.railway.app.
+/* AM IPTV — licentie + gratis proefperiode.
+   - Zonder licentie: 3 dagen gratis per TV (bijgehouden op de server, per toestel-ID).
+   - Na de proefperiode: de app werkt nog 1 minuut en vraagt dan om een licentiecode.
    - Code wordt lokaal bewaard en elke 24 uur opnieuw gecontroleerd.
    - Geen internet / server onbereikbaar: app blijft werken tot 7 dagen na laatste geslaagde controle.
    - Server zegt expliciet "ongeldig" of "verlopen": app vraagt opnieuw om een code. */
 var License = (function () {
   'use strict';
 
-  var API = 'https://am-iptv-production.up.railway.app/api/license/';
-  var STORE = 'amiptv.license';
+  var BASE = 'https://am-iptv-production.up.railway.app';
+  var API = BASE + '/api/license/';
+  var STORE = 'amiptv.license', TSTORE = 'amiptv.trial', DSTORE = 'amiptv.device';
+  var TRIAL_DAYS = 3, NAG_AFTER = 60 * 1000;
   var RECHECK = 24 * 3600 * 1000;
   var GRACE = 7 * 24 * 3600 * 1000;
   var K = { UP: 38, DOWN: 40, ENTER: 13, BACK: 10009, ESC: 27 };
 
-  var active = false, onOk = null, focusIdx = 0;
+  var active = false, onOk = null, focusIdx = 0, canBack = false, onClose = null, appStarted = false, nagTimer = null;
   function $(id) { return document.getElementById(id); }
 
   function load() { try { return JSON.parse(localStorage.getItem(STORE)); } catch (e) { return null; } }
@@ -35,6 +38,63 @@ var License = (function () {
     });
   }
 
+  function getJSON(url) {
+    return new Promise(function (resolve, reject) {
+      var x = new XMLHttpRequest();
+      x.open('GET', url); x.timeout = 10000;
+      x.onload = function () {
+        if (x.status !== 200) return reject(new Error('HTTP ' + x.status));
+        try { resolve(JSON.parse(x.responseText)); } catch (e) { reject(e); }
+      };
+      x.onerror = x.ontimeout = function () { reject(new Error('network')); };
+      x.send();
+    });
+  }
+
+  /* Vast toestel-ID: Samsung DUID (blijft gelijk na herinstallatie), anders willekeurig ID */
+  function deviceId() {
+    try { var d = webapis.productinfo.getDuid(); if (d && d.length >= 8) return 'duid-' + d; } catch (e) {}
+    try {
+      var id = localStorage.getItem(DSTORE);
+      if (!id) {
+        id = 'dev-'; for (var i = 0; i < 24; i++) id += '0123456789abcdef'[Math.floor(Math.random() * 16)];
+        localStorage.setItem(DSTORE, id);
+      }
+      return id;
+    } catch (e) { return 'dev-nostorage'; }
+  }
+
+  function loadTrial() { try { return JSON.parse(localStorage.getItem(TSTORE)); } catch (e) { return null; } }
+  function saveTrial(t) { try { localStorage.setItem(TSTORE, JSON.stringify(t)); } catch (e) {} }
+
+  /* resolve({ active, msLeft }) — server eerst, bij geen verbinding de laatst bekende stand */
+  function trialStatus() {
+    return getJSON(BASE + '/api/trial/' + encodeURIComponent(deviceId())).then(function (r) {
+      var t = { expires_at: r.expires_at, offset: r.now * 1000 - Date.now() };
+      saveTrial(t);
+      return { active: r.active, msLeft: r.expires_at * 1000 - (Date.now() + t.offset) };
+    }).catch(function () {
+      var t = loadTrial();
+      if (!t) { t = { expires_at: Math.floor(Date.now() / 1000) + TRIAL_DAYS * 86400, offset: 0, local: true }; saveTrial(t); }
+      var left = t.expires_at * 1000 - (Date.now() + (t.offset || 0));
+      return { active: left > 0, msLeft: left };
+    });
+  }
+
+  function stopPlayback() { try { Player.stop(); } catch (e) {} }
+
+  /* Proefperiode voorbij: afspelen stoppen en om licentie vragen (kan niet weg met Terug) */
+  function nag() {
+    if (active) return;
+    stopPlayback();
+    try { Pair.stop(); } catch (e) {}
+    showScreen(T('Je gratis proefperiode is voorbij. Koop een licentie op am-iptv-production.up.railway.app en voer je code in.'), false);
+  }
+  function scheduleNag(ms) {
+    clearTimeout(nagTimer);
+    nagTimer = setTimeout(nag, Math.max(0, Math.min(ms, 2147483000)));
+  }
+
   function expired(v) { return v && v.expires_at && v.expires_at * 1000 < Date.now(); }
 
   function msg(t, ok) { var m = $('lic-msg'); m.textContent = t || ''; m.classList.toggle('ok', !!ok); }
@@ -45,19 +105,22 @@ var License = (function () {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
 
-  function showScreen(text) {
-    active = true;
+  function showScreen(text, back) {
+    active = true; canBack = !!back;
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.add('hidden'); });
     $('license').classList.remove('hidden');
     var v = load();
     if (v && v.key) $('lic-key').value = v.key;
     msg(text || '');
+    $('lic-hint').textContent = canBack ? T('Pijltjes: navigeren · OK: kiezen · Terug: vorige') : T('Pijltjes: navigeren · OK: kiezen · Terug: afsluiten');
     focus(0);
   }
 
   function done(v) {
     v.checked = Date.now();
     save(v);
+    clearTimeout(nagTimer);
+    if (appStarted) { location.reload(); return; }
     if (active) {
       active = false;
       $('license').classList.add('hidden');
@@ -94,6 +157,7 @@ var License = (function () {
       case K.DOWN: focus(focusIdx + 1); break;
       case K.ENTER: if (focusIdx === 0) input.focus(); else activate(); break;
       case K.BACK: case K.ESC:
+        if (canBack) { close(); break; }
         try { tizen.application.getCurrentApplication().exit(); } catch (e) {}
         break;
       default: return false;
@@ -105,26 +169,55 @@ var License = (function () {
   function revalidate(v) {
     check(v.key).then(function (r) {
       if (r && r.valid) { v.plan = r.plan; v.expires_at = r.expires_at || null; v.checked = Date.now(); save(v); }
-      else { clear(); location.reload(); }
+      else { clear(); location.reload(); }   // ingetrokken: opnieuw starten (proef/licentie)
     }).catch(function () { /* offline: houd huidige status aan */ });
+  }
+
+  function licensed() { var v = load(); return !!(v && v.key && !expired(v)); }
+
+  function startApp(cb, info) { appStarted = true; cb(info || {}); }
+
+  function trialFlow(cb) {
+    trialStatus().then(function (t) {
+      if (t.active) {
+        startApp(cb, { trialDays: Math.max(1, Math.ceil(t.msLeft / 86400000)) });
+        scheduleNag(t.msLeft + NAG_AFTER);      // proef loopt af terwijl de app open staat
+      } else {
+        startApp(cb, { trialEnded: true });
+        scheduleNag(NAG_AFTER);                 // nog 1 minuut gebruiken, dan licentie vragen
+      }
+    });
   }
 
   function ensure(cb) {
     var v = load();
     if (v && v.key && !expired(v)) {
       var age = Date.now() - (v.checked || 0);
-      if (age < RECHECK) { cb(); revalidate(v); return; }
+      if (age < RECHECK) { startApp(cb); revalidate(v); return; }
       check(v.key).then(function (r) {
-        if (r && r.valid) { v.plan = r.plan; v.expires_at = r.expires_at || null; v.checked = Date.now(); save(v); cb(); }
-        else { clear(); onOk = cb; showScreen(r && r.reason === 'expired' ? T('Je licentie is verlopen') : ''); }
+        if (r && r.valid) { v.plan = r.plan; v.expires_at = r.expires_at || null; v.checked = Date.now(); save(v); startApp(cb); }
+        else { clear(); trialFlow(cb); }
       }).catch(function () {
-        if (age < GRACE) cb();
-        else { onOk = cb; showScreen(T('Geen verbinding met de server')); }
+        if (age < GRACE) startApp(cb);
+        else { onOk = function () { startApp(cb); }; showScreen(T('Geen verbinding met de server'), false); }
       });
       return;
     }
-    onOk = cb;
-    showScreen('');
+    if (v) clear();
+    trialFlow(cb);
+  }
+
+  /* Vanaf het playlistscherm: licentiecode invoeren (Terug = terug naar playlistscherm) */
+  function open(closeCb) {
+    onClose = closeCb;
+    try { Pair.stop(); } catch (e) {}
+    showScreen('', true);
+  }
+  function close() {
+    active = false; canBack = false;
+    $('license').classList.add('hidden');
+    var cb = onClose; onClose = null;
+    if (cb) cb();
   }
 
   document.addEventListener('click', function (e) {
@@ -133,5 +226,5 @@ var License = (function () {
     else if (e.target.id === 'lic-key') { focus(0); }
   });
 
-  return { ensure: ensure, key: key, active: function () { return active; } };
+  return { ensure: ensure, key: key, open: open, licensed: licensed, active: function () { return active; } };
 })();

@@ -47,6 +47,10 @@
   function show(name) {
     ['setup', 'home', 'detail', 'player'].forEach(function (s) { $(s).classList.toggle('hidden', s !== name); });
     S.screen = name;
+    if (name === 'setup') {
+      $('btn-license').classList.toggle('hidden', License.licensed());
+      Pair.start(function (src) { prefill(src); openSource(src, true); });   // playlist via telefoon: automatisch laden
+    } else Pair.stop();
   }
   function loading(on, text) {
     $('loading').classList.toggle('hidden', !on);
@@ -206,6 +210,7 @@
         if (onTab) { setMode(el.getAttribute('data-mode')); setupFocus(S.focusIdx); }
         else if (el.tagName === 'INPUT') el.focus();
         else if (el.id === 'btn-load') submit();
+        else if (el.id === 'btn-license') License.open(function () { show('setup'); setupFocus(S.focusIdx); });
         break;
       case KEY.BACK:
         if (S.db) { show('home'); updateFocus(); } else exitApp();
@@ -1164,8 +1169,10 @@
 
   /* ---------- Start (pas na geldige licentie) ---------- */
   renderNav();
-  License.ensure(function () {
+  License.ensure(function (info) {
     show('setup');
+    if (info.trialDays) toast(T('Gratis proefperiode · nog {n} dag(en)').replace('{n}', info.trialDays));
+    if (info.trialEnded) toast(T('Je gratis proefperiode is voorbij'));
     var saved = loadSaved();
     prefill(saved);
     setupFocus(0);

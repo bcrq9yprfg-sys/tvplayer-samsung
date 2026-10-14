@@ -58,6 +58,14 @@ var T = (function () {
     'Keuze wordt per film/serie onthouden': 'Your choice is remembered per movie/series',
     'Geen titelgegevens om ondertitels te zoeken': 'No title information to search subtitles',
     'Online ondertitels niet beschikbaar': 'Online subtitles not available',
+    /* proefperiode & QR */
+    'Gratis proefperiode · nog {n} dag(en)': 'Free trial · {n} day(s) left',
+    'Je gratis proefperiode is voorbij': 'Your free trial has ended',
+    'Je gratis proefperiode is voorbij. Koop een licentie op am-iptv-production.up.railway.app en voer je code in.': 'Your free trial has ended. Buy a license at am-iptv-production.up.railway.app and enter your code.',
+    'Licentie invoeren': 'Enter license code', 'Of scan met je telefoon': 'Or scan with your phone',
+    'Scan de QR-code, vul je playlist in op je telefoon. De TV laadt hem automatisch.': 'Scan the QR code and enter your playlist on your phone. The TV loads it automatically.',
+    'Code: ': 'Code: ', 'Playlist ontvangen…': 'Playlist received…', 'QR-code laden…': 'Loading QR code…',
+    'QR-code niet beschikbaar (geen verbinding)': 'QR code not available (no connection)',
     /* netwerk & bronnen */
     'Server gaf HTTP ': 'Server returned HTTP ', 'Geen verbinding met server': 'No connection to the server',
     'Server reageert te traag (time-out)': 'Server is not responding (timeout)', 'Ongeldig antwoord van server': 'Invalid response from server',

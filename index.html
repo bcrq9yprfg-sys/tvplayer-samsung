@@ -19,7 +19,7 @@
   </div>
   <button class="focusable primary" id="lic-btn">Activeren</button>
   <p id="lic-msg" class="msg"></p>
-  <p class="hint">Pijltjes: navigeren · OK: kiezen · Terug: afsluiten</p>
+  <p class="hint" id="lic-hint">Pijltjes: navigeren · OK: kiezen · Terug: afsluiten</p>
 </div>
 
 <!-- Playlist instellen -->
@@ -39,8 +39,16 @@
     <input class="focusable" id="xt-pass" type="password" placeholder="Wachtwoord">
   </div>
   <button class="focusable primary" id="btn-load">Laden</button>
+  <button class="focusable" id="btn-license">Licentie invoeren</button>
   <p id="setup-msg" class="msg"></p>
   <p class="hint">Pijltjes: navigeren · OK: kiezen · Terug: vorige</p>
+  <div id="qr-panel">
+    <h2>Of scan met je telefoon</h2>
+    <div id="qr-img"></div>
+    <div id="qr-code"></div>
+    <p class="qr-help">Scan de QR-code, vul je playlist in op je telefoon. De TV laadt hem automatisch.</p>
+    <div id="qr-status"></div>
+  </div>
 </div>
 
 <!-- Startpagina -->
@@ -131,6 +139,8 @@
 <script src="js/i18n.js"></script>
 <script src="js/config.js"></script>
 <script src="js/license.js"></script>
+<script src="js/qrcode.js"></script>
+<script src="js/pair.js"></script>
 <script src="js/parse.js"></script>
 <script src="js/sources.js"></script>
 <script src="js/player.js"></script>
