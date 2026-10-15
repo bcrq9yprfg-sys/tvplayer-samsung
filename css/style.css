@@ -222,7 +222,7 @@ button { min-width: 320px; }
 .seg { font-size: 28px; padding: 10px 28px; border-radius: 30px; background: rgba(255,255,255,.08); color: var(--mut); border: 3px solid transparent; }
 .seg.active { background: rgba(255,255,255,.2); color: var(--fg); font-weight: 700; }
 .seg.focused { border-color: #fff; }
-#b-list { position: absolute; left: 80px; right: 80px; top: 130px; bottom: 30px; overflow: hidden; }
+#b-list { position: absolute; left: 80px; right: 80px; top: 130px; bottom: 30px; overflow: visible; }
 .fold { height: 76px; display: flex; align-items: center; gap: 24px; padding: 0 30px; margin-bottom: 8px;
   border-radius: 12px; background: #13151d; border: 4px solid transparent; font-size: 32px; }
 .fold .fi { font-size: 30px; width: 40px; text-align: center; color: var(--mut); }
@@ -232,7 +232,7 @@ button { min-width: 320px; }
 .fold.focused { background: #262a3a; border-color: #fff; }
 .fold.on .fi { color: var(--acc); }
 .b-pos { position: absolute; right: 0; top: -52px; font-size: 24px; color: var(--mut); }
-#b-grid { position: absolute; left: 80px; right: 40px; top: 130px; bottom: 0; overflow: hidden; }
+#b-grid { position: absolute; left: 80px; right: 40px; top: 130px; bottom: 0; overflow: visible; }
 .grow { display: flex; gap: 24px; padding: 12px 0; }
 .empty-b { font-size: 30px; color: var(--mut); padding: 30px 0; }
 
@@ -328,3 +328,17 @@ button { min-width: 320px; }
 #osd-ctrl .oc { display: inline-flex; align-items: center; gap: 10px; }
 #osd-ctrl .oc .ico { width: 1.1em; height: 1.1em; }
 .sb-icon .ico { width: 1.1em; height: 1.1em; }
+
+/* scrollbalk (UX150014/UX150022) */
+.vbar { position: absolute; right: 0; top: 0; bottom: 20px; width: 6px; border-radius: 3px; background: rgba(255,255,255,.12); pointer-events: none; }
+.vbar i { position: absolute; left: 0; right: 0; border-radius: 3px; background: rgba(255,255,255,.6); }
+#b-list .vbar { right: -44px; top: 6px; }
+#b-grid .vbar { right: 6px; top: 6px; }
+#sm-bar { position: absolute; right: 22px; top: 200px; bottom: 40px; width: 6px; }
+#sm-bar .vbar { right: 0; top: 0; bottom: 0; }
+#rows-bar .vbar { right: 12px; top: 30px; bottom: 30px; }
+/* afsluiten bevestigen (UX150019) */
+#exitbox { position: absolute; inset: 0; z-index: 95; background: rgba(0,0,0,.75); display: flex; align-items: center; justify-content: center; }
+.exitbox-in { width: 800px; text-align: center; }
+.exitbox-in h2 { margin-bottom: 44px; }
+.exitbox-in .statsbox-btns { justify-content: center; }

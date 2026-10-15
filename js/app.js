@@ -231,7 +231,7 @@
         }
         break;
       case KEY.BACK:
-        if (S.db) { show('home'); updateFocus(); } else exitApp();
+        if (S.db) { show('home'); updateFocus(); } else askExit();
         break;
       default: return false;
     }
@@ -433,6 +433,7 @@
     });
     var cur = S.rowEls[S.row];
     $('rows').style.transform = 'translateY(' + (cur ? -cur.el.offsetTop : 0) + 'px)';
+    $('rows-bar').innerHTML = vbar(S.rowEls.length, 1, S.row);
     scheduleHero();
   }
 
@@ -510,6 +511,13 @@
     }).catch(function () { it._info = {}; return {}; });
   }
 
+  /* Scrollbalk rechts (Samsung UX150014/UX150022): alleen als de lijst langer is dan het scherm */
+  function vbar(total, visible, first) {
+    if (total <= visible) return '';
+    var h = Math.max(6, visible / total * 100), t = Math.min(100 - h, first / total * 100);
+    return '<div class="vbar"><i style="top:' + t.toFixed(2) + '%;height:' + h.toFixed(2) + '%"></i></div>';
+  }
+
   /* ---------- Mappenlijst en raster ---------- */
   function bKind() { return S.tab === T_FAV ? S.favKind : KINDS[S.tab]; }
   function bState() {
@@ -556,7 +564,7 @@
           '<span class="fn">' + esc(g.name) + '</span><span class="fc">' + g.items.length + '</span>' +
           '<span class="fs">' + (!fav && on ? ICO.star : '') + '</span></div>';
       }
-      $('b-list').innerHTML = cats.length ? html + '<div class="b-pos">' + (st.idx + 1) + ' / ' + cats.length + '</div>'
+      $('b-list').innerHTML = cats.length ? html + '<div class="b-pos">' + (st.idx + 1) + ' / ' + cats.length + '</div>' + vbar(cats.length, LIST_ROWS, start)
         : '<div class="empty-b">' + T('Geen mappen') + '</div>';
       return;
     }
@@ -573,7 +581,7 @@
         for (var c = a; c < Math.min(items.length, a + cols); c++) out += cardHtml(items[c]);
         out += '</div>';
       }
-      grid.innerHTML = out + '<div class="b-pos"></div>';
+      grid.innerHTML = out + vbar(Math.ceil(items.length / cols), 2, first) + '<div class="b-pos"></div>';
       showImgs(grid);
       grid._cat = st.cat; grid._first = first;
       grid._cards = grid.querySelectorAll('.card');
@@ -685,7 +693,7 @@
           else if (S.rows.length) S.zone = 'rows';
           break;
         case KEY.ENTER: selectTab(S.nav); return true;
-        case KEY.BACK: if (S.tab !== T_HOME) selectTab(T_HOME); else exitApp(); return true;
+        case KEY.BACK: if (S.tab !== T_HOME) selectTab(T_HOME); else askExit(); return true;
         default: return false;
       }
       updateFocus(); return true;
@@ -1193,6 +1201,7 @@
     $('sm-hint').textContent = T('Keuze wordt per film/serie onthouden');
     var sel = $('sm-list').children[S.sm.idx];
     $('sm-list').style.transform = 'translateY(' + (-Math.max(0, S.sm.idx - 8) * 74) + 'px)';
+    $('sm-bar').innerHTML = vbar(S.sm.items.length, 9, Math.max(0, S.sm.idx - 8));
   }
   function subMenuKey(code) {
     var sm = S.sm, it = sm.items[sm.idx], p = S.play;
@@ -1224,6 +1233,7 @@
     if (window.License && License.active()) { if (License.key(code)) e.preventDefault(); return; }
     if (window.Stats && Stats.active()) { Stats.key(code); e.preventDefault(); return; }
     if (netDown) { if (code === KEY.BACK || code === KEY.ESC || code === KEY.BACKSPACE) exitApp(); e.preventDefault(); return; }
+    if (exitOn) { exitKey(code); e.preventDefault(); return; }
     var inInput = document.activeElement && document.activeElement.tagName === 'INPUT';
     if (code === KEY.ESC || (code === KEY.BACKSPACE && !inInput)) code = KEY.BACK;
     if (!$('loading').classList.contains('hidden')) {
@@ -1257,6 +1267,37 @@
   $('oc-play').innerHTML = ICO.pause;
   $('oc-next').innerHTML = esc(T('Volgende aflevering')) + ' ' + ICO.next;
   document.querySelector('#q-wrap .sb-icon').innerHTML = ICO.search;
+
+  /* ---------- Afsluiten bevestigen (Samsung UX150019) ---------- */
+  var exitOn = false, exitIdx = 0;
+  function exitFocus(i) {
+    exitIdx = Math.max(0, Math.min(1, i));
+    [$('ex-yes'), $('ex-no')].forEach(function (b, j) { b.classList.toggle('focused', j === exitIdx); });
+  }
+  function askExit() {
+    exitOn = true;
+    // maar één focus: markering achter de pop-up weghalen (komt terug bij sluiten)
+    Array.prototype.forEach.call(document.querySelectorAll('.screen .focused'), function (el) { el.classList.remove('focused'); });
+    $('exitbox').classList.remove('hidden'); exitFocus(0);
+  }
+  function closeExit() {
+    exitOn = false; $('exitbox').classList.add('hidden');
+    if (S.screen === 'setup') setupFocus(S.focusIdx); else if (S.screen === 'home') updateFocus();
+  }
+  function exitKey(code) {
+    switch (code) {
+      case KEY.LEFT: case KEY.UP: exitFocus(exitIdx - 1); break;
+      case KEY.RIGHT: case KEY.DOWN: exitFocus(exitIdx + 1); break;
+      case KEY.ENTER: if (exitIdx === 0) { closeExit(); exitApp(); } else closeExit(); break;
+      case KEY.BACK: closeExit(); break;
+      default: break;
+    }
+  }
+  document.addEventListener('click', function (e) {
+    if (!exitOn) return;
+    if (e.target.id === 'ex-yes') { closeExit(); exitApp(); }
+    else if (e.target.id === 'ex-no') closeExit();
+  });
 
   /* ---------- Netwerk: melding bij wegvallen (Samsung-eis) ---------- */
   var netDown = false;

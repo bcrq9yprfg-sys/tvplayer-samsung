@@ -80,6 +80,7 @@ var T = (function () {
     /* speler & account */
     'Afspelen lukt niet. Controleer je internetverbinding of kies een andere titel.': 'Playback failed. Check your internet connection or choose another title.',
     'Volgende aflevering': 'Next episode', 'Licentie uitloggen': 'Log out license',
+    'AM IPTV afsluiten?': 'Exit AM IPTV?', 'Afsluiten': 'Exit', 'Annuleren': 'Cancel',
     /* kijkstatistieken */
     'Help AM IPTV beter maken': 'Help us improve AM IPTV',
     'Mogen we bijhouden welke zenders, films en series je kijkt? We gebruiken dit om de app te verbeteren. Je playlist en inloggegevens worden nooit verstuurd. Je kunt dit later wijzigen via de Playlist-tab.':
