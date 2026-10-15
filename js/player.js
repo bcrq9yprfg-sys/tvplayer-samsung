@@ -17,6 +17,7 @@ var Player = (function () {
   }
 
   function stop() {
+    current = null;
     screenSaver(true);
     if (hasAV) {
       try { webapis.avplay.stop(); } catch (e) {}
@@ -30,8 +31,14 @@ var Player = (function () {
     }
   }
 
-  function play(url) {
+  var current = null, resumeInfo = null;   // huidige stream (voor hervatten na Smart Hub)
+
+  /* Begrijpelijke foutmelding met oplossing (Samsung UX150042) */
+  function failMsg() { return T('Afspelen lukt niet. Controleer je internetverbinding of kies een andere titel.'); }
+
+  function play(url, startMs) {
     stop();
+    current = url;
     screenSaver(false);
     onStatus(T('Laden…'));
     if (hasAV) {
@@ -43,19 +50,20 @@ var Player = (function () {
         webapis.avplay.setListener({
           onbufferingstart: function () { onStatus(T('Bufferen…')); },
           onbufferingcomplete: function () { onStatus(''); },
-          onerror: function (e) { onStatus(T('Fout: ') + e); },
+          onerror: function () { onStatus(failMsg()); },
           onstreamcompleted: function () { onStatus(''); onEnd(); },
           onsubtitlechange: function (duration, text) { onSub(String(text || '').replace(/<[^>]+>/g, '')); }
         });
         webapis.avplay.prepareAsync(
           function () {
             try { webapis.avplay.setSilentSubtitle(true); } catch (e) {}
+            if (startMs > 0) { try { webapis.avplay.seekTo(startMs); } catch (e) {} }
             webapis.avplay.play(); onStatus(''); onReady();
           },
-          function (e) { onStatus(T('Kan niet afspelen: ') + (e && e.name || e)); }
+          function () { onStatus(failMsg()); }
         );
       } catch (e) {
-        onStatus(T('Kan niet afspelen: ') + e.message);
+        onStatus(failMsg());
       }
     } else {
       vid.style.display = 'block';
@@ -64,7 +72,8 @@ var Player = (function () {
       vid.onplaying = function () { onStatus(''); if (first) { first = false; onReady(); } };
       vid.onwaiting = function () { onStatus(T('Bufferen…')); };
       vid.onended = function () { onEnd(); };
-      vid.onerror = function () { onStatus(T('Browser kan stream niet afspelen')); };
+      vid.onerror = function () { onStatus(failMsg()); };
+      if (startMs > 0) vid.onloadedmetadata = function () { try { vid.currentTime = startMs / 1000; } catch (e) {} };
       vid.play().catch(function () {});
     }
   }
@@ -76,8 +85,20 @@ var Player = (function () {
       if (st === 'PAUSED') { webapis.avplay.play(); return false; }
       return false;
     }
-    if (vid.paused) { vid.play(); return false; }
+    if (vid.paused) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); return false; }
     vid.pause(); return true;
+  }
+
+  /* Opnieuw starten op dezelfde plek (na netwerkherstel) */
+  function restart() {
+    if (!current) return;
+    var u = current, t = duration() > 0 ? time() : 0;
+    play(u, t);
+  }
+
+  function paused() {
+    if (hasAV) { try { return webapis.avplay.getState() === 'PAUSED'; } catch (e) { return false; } }
+    return !!vid.paused && !!vid.src;
   }
 
   function time() {
@@ -120,12 +141,23 @@ var Player = (function () {
   }
   function muteEmbeddedSubs() { if (hasAV) { try { webapis.avplay.setSilentSubtitle(true); } catch (e) {} } onSub(''); }
 
+  /* Multitasking (Samsung MU150001): naar Smart Hub = stoppen en positie onthouden,
+     terug in de app = verder afspelen (film/serie op dezelfde plek, live opnieuw starten). */
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) stop();
+    if (document.hidden) {
+      if (current) {
+        var d = duration();
+        resumeInfo = { url: current, t: d > 0 ? time() : 0, paused: paused() };
+        stop(); current = null;
+      }
+    } else if (resumeInfo) {
+      var r = resumeInfo; resumeInfo = null;
+      play(r.url, r.t);
+    }
   });
 
   return {
-    play: play, stop: stop, togglePause: togglePause, time: time, duration: duration, seek: seek,
+    play: play, stop: stop, restart: restart, togglePause: togglePause, paused: paused, time: time, duration: duration, seek: seek,
     tracks: tracks, selectTrack: selectTrack, muteEmbeddedSubs: muteEmbeddedSubs,
     setStatusHandler: function (fn) { onStatus = fn; },
     setEndHandler: function (fn) { onEnd = fn; },

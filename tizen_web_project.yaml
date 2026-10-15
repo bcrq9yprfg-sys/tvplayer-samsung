@@ -9,7 +9,7 @@ api_version: "2.3"
 build_type: Debug
 
 # Output name for application
-output_name: TVPlayer
+output_name: AMIPTV
 
 # Output path for build
 output_path: ""
@@ -27,16 +27,21 @@ trust_anchor: []
 
 # list of files in web project (.html,.css etc) and resources
 files:
-  - .vscode/settings.json
-  - README.md
-  - TVPlayer.wgt
-  - css/style.css
+  - config.xml
   - icon.png
   - index.html
+  - css/style.css
   - js/app.js
+  - js/config.js
+  - js/i18n.js
+  - js/license.js
+  - js/pair.js
+  - js/parse.js
   - js/player.js
+  - js/qrcode.js
   - js/sources.js
-  - test.m3u
+  - js/stats.js
+  - js/subtitles.js
 
 # list of files to exclude based on the matched patterns
 excludes:
@@ -62,6 +67,14 @@ excludes:
   - \.wgt
   - tizen_web_project.yaml
   - webUnitTest/*
+  - \.git/.*
+  - \.gitignore
+  - \.vscode/.*
+  - \.tizen-rds/.*
+  - README\.md
+  - test\.m3u
+  - demo\.m3u
+  - .*\.pptx
 
 # project dependencies
 deps: []

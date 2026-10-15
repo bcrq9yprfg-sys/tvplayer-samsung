@@ -27,8 +27,8 @@ var License = (function () {
   function check(key) {
     return new Promise(function (resolve, reject) {
       var x = new XMLHttpRequest();
-      x.open('GET', API + encodeURIComponent(key));
-      x.timeout = 10000;
+      x.open('GET', API + encodeURIComponent(key) + '?d=' + encodeURIComponent(deviceId()));
+      x.timeout = 5000;
       x.onload = function () {
         if (x.status !== 200) return reject(new Error('HTTP ' + x.status));
         try { resolve(JSON.parse(x.responseText)); } catch (e) { reject(e); }
@@ -41,7 +41,7 @@ var License = (function () {
   function getJSON(url) {
     return new Promise(function (resolve, reject) {
       var x = new XMLHttpRequest();
-      x.open('GET', url); x.timeout = 10000;
+      x.open('GET', url); x.timeout = 5000;
       x.onload = function () {
         if (x.status !== 200) return reject(new Error('HTTP ' + x.status));
         try { resolve(JSON.parse(x.responseText)); } catch (e) { reject(e); }
@@ -173,6 +173,9 @@ var License = (function () {
     }).catch(function () { /* offline: houd huidige status aan */ });
   }
 
+  /* Uitloggen: licentie van deze TV verwijderen en opnieuw starten (proef/licentievraag) */
+  function logout() { clear(); location.reload(); }
+
   function licensed() { var v = load(); return !!(v && v.key && !expired(v)); }
 
   function startApp(cb, info) { appStarted = true; cb(info || {}); }
@@ -226,5 +229,6 @@ var License = (function () {
     else if (e.target.id === 'lic-key') { focus(0); }
   });
 
-  return { ensure: ensure, key: key, open: open, licensed: licensed, active: function () { return active; } };
+  return { ensure: ensure, key: key, open: open, licensed: licensed, logout: logout, active: function () { return active; },
+           device: deviceId, code: function () { var v = load(); return v && v.key && !expired(v) ? v.key : ''; } };
 })();

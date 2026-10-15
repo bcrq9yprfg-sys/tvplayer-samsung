@@ -7,6 +7,24 @@ var LANG = (function () {
   return l.indexOf('nl') === 0 ? 'nl' : 'en';
 })();
 
+/* Icoontjes als SVG: lettertype-onafhankelijk (geen lege vakjes op TV, Samsung UX150011) */
+var ICO = (function () {
+  function svg(d, rule) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor"' + (rule ? ' fill-rule="evenodd"' : '') + ' d="' + d + '"/></svg>'; }
+  return {
+    play: svg('M8 5v14l11-7z'),
+    pause: svg('M6 5h4v14H6zM14 5h4v14h-4z'),
+    rew: svg('M11 6v12L2.5 12zM21 6v12l-8.5-6z'),
+    ff: svg('M13 6v12l8.5-6zM3 6v12l8.5-6z'),
+    next: svg('M5 6v12l8.5-6zM15 6h3v12h-3z'),
+    star: svg('M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z'),
+    dot: svg('M12 6a6 6 0 100 12 6 6 0 000-12z'),
+    box: svg('M4 4h16v16H4zM6.5 6.5v11h11v-11z', true),
+    boxOn: svg('M4 4h16v16H4zM6.5 6.5v11h11v-11zM10.3 15.6l-3.2-3.2 1.4-1.4 1.8 1.8 4.9-4.9 1.4 1.4z', true),
+    chev: svg('M9 6l6 6-6 6z'),
+    search: svg('M10 3a7 7 0 015.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1110 3zm0 2a5 5 0 100 10 5 5 0 000-10z', true)
+  };
+})();
+
 var T = (function () {
   var EN = {
     /* tabs & rijen */
@@ -40,12 +58,12 @@ var T = (function () {
     'Kies je favoriete mappen: OK = aan/uit. Daarna naar Home.': 'Choose your favorite folders: OK = on/off. Then go to Home.',
     'Goedenacht': 'Good night', 'Goedemorgen': 'Good morning', 'Goedemiddag': 'Good afternoon', 'Goedenavond': 'Good evening',
     'Wat wil je kijken?': 'What would you like to watch?', 'Nu live op ': 'Live now on ',
-    '▶  OK om te kijken': '▶  OK to watch', '▶  OK om te openen': '▶  OK to open',
+    'OK om te kijken': 'OK to watch', 'OK om te openen': 'OK to open',
     'Seizoenen & afleveringen': 'Seasons & episodes', 'Kanaal ': 'Channel ', ' bestaat niet': ' does not exist',
     'OK = favoriet aan/uit · ': 'OK = favorite on/off · ', ' gekozen': ' selected', ' mappen': ' folders',
     ' titels · Terug = mappen': ' titles · Return = folders', 'Geen mappen': 'No folders',
     /* detail */
-    '▶  Afspelen': '▶  Play', '▶  Afspelen  S': '▶  Play  S', ' · A': ' · E', 'Terug': 'Back',
+    'Afspelen': 'Play', 'Afspelen  S': 'Play  S', ' · A': ' · E', 'Terug': 'Back',
     'Ondertitels: ': 'Subtitles: ', 'Afleveringen laden…': 'Loading episodes…', 'Afleveringen laden mislukt': 'Failed to load episodes',
     'Geen afleveringen gevonden': 'No episodes found', 'Aflevering ': 'Episode ', 'Seizoen ': 'Season ', 'Meer zoals dit': 'More like this',
     /* speler */
@@ -58,6 +76,16 @@ var T = (function () {
     'Keuze wordt per film/serie onthouden': 'Your choice is remembered per movie/series',
     'Geen titelgegevens om ondertitels te zoeken': 'No title information to search subtitles',
     'Online ondertitels niet beschikbaar': 'Online subtitles not available',
+    'SERIE': 'SERIES', 'FILM': 'MOVIE', ' map': ' folder',
+    /* speler & account */
+    'Afspelen lukt niet. Controleer je internetverbinding of kies een andere titel.': 'Playback failed. Check your internet connection or choose another title.',
+    'Volgende aflevering': 'Next episode', 'Licentie uitloggen': 'Log out license',
+    /* kijkstatistieken */
+    'Help AM IPTV beter maken': 'Help us improve AM IPTV',
+    'Mogen we bijhouden welke zenders, films en series je kijkt? We gebruiken dit om de app te verbeteren. Je playlist en inloggegevens worden nooit verstuurd. Je kunt dit later wijzigen via de Playlist-tab.':
+      'May we keep track of which channels, movies and series you watch? We use this to improve the app. Your playlist and login details are never sent. You can change this later on the Playlist tab.',
+    'Ja, akkoord': 'Yes, I agree', 'Nee, liever niet': 'No, thanks',
+    'Kijkstatistieken delen: ': 'Share viewing statistics: ', 'aan': 'on', 'uit': 'off',
     /* proefperiode & QR */
     'Gratis proefperiode · nog {n} dag(en)': 'Free trial · {n} day(s) left',
     'Je gratis proefperiode is voorbij': 'Your free trial has ended',
@@ -78,8 +106,8 @@ var T = (function () {
   return function (s) { return LANG === 'nl' ? s : (EN.hasOwnProperty(s) ? EN[s] : s); };
 })();
 
-/* Vaste teksten in index.html vertalen (tekstknopen en placeholders) */
-(function () {
+/* Vaste teksten in index.html vertalen (tekstknopen en placeholders) — niet in de worker */
+if (typeof document !== 'undefined') (function () {
   function run() {
     if (LANG === 'nl') return;
     document.documentElement.lang = 'en';

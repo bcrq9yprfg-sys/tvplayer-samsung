@@ -44,11 +44,13 @@
   }
   function mb(b) { return (b / 1048576).toFixed(1) + ' MB'; }
   function clamp(i, len) { return Math.max(0, Math.min(i, len - 1)); }
+  function statsLabel() { $('btn-stats').textContent = T('Kijkstatistieken delen: ') + (Stats.enabled() ? T('aan') : T('uit')); }
   function show(name) {
     ['setup', 'home', 'detail', 'player'].forEach(function (s) { $(s).classList.toggle('hidden', s !== name); });
     S.screen = name;
     if (name === 'setup') {
-      $('btn-license').classList.toggle('hidden', License.licensed());
+      $('btn-license').textContent = License.licensed() ? T('Licentie uitloggen') : T('Licentie invoeren');
+      statsLabel();
       Pair.start(function (src) { prefill(src); openSource(src, true); });   // playlist via telefoon: automatisch laden
     } else Pair.stop();
   }
@@ -96,7 +98,9 @@
     msg('');
     loading(true, T('Laden…'));
     if (force) { fetchFresh(src, false); return; }
+    var gen = S.loadGen;
     Sources.cacheGet(srcKey(src)).then(function (c) {
+      if (gen !== S.loadGen) return;
       if (c && (c.live.length || c.movies.length || c.series.length)) {
         useRaw(c, src);
         loading(false); enterHome();
@@ -105,13 +109,23 @@
     });
   }
 
+  S.loadGen = 0;
+  function cancelLoading() {
+    S.loadGen++;
+    loading(false);
+    if (S.db && S.screen !== 'setup') { show('home'); updateFocus(); }
+    else { show('setup'); setupFocus(S.focusIdx); }
+  }
   function fetchFresh(src, silent) {
+    var gen = S.loadGen;
     function fail(e) {
+      if (gen !== S.loadGen) return;
       if (silent) { toast(T('Verversen mislukt: ') + (e && e.message || 'fout')); return; }
       loading(false); show('setup');
       msg(e && e.message || T('Laden mislukt')); setupFocus(S.focusIdx);
     }
     function apply(raw) {
+      if (gen !== S.loadGen) return;      // afgebroken met Terug
       save(src);
       Sources.cachePut(srcKey(src), raw);
       useRaw(raw, src);
@@ -121,7 +135,7 @@
 
     if (src.mode !== 'xtream') {
       Sources.loadM3U(src.url, function (l, t) {
-        if (silent) return;
+        if (silent || gen !== S.loadGen) return;
         loading(true, l < 0 ? T('Verwerken…') : T('Playlist downloaden… ') + mb(l) + (t ? ' / ' + mb(t) : ''));
       }).then(apply).catch(fail);
       return;
@@ -131,13 +145,13 @@
     xt.auth().then(function () {
       var raw = { live: [], movies: [], series: [] }, got = { l: 0, m: 0, s: 0 };
       function status() {
-        if (!silent) loading(true, T('Laden…  zenders ') + mb(got.l) + T('  ·  films ') + mb(got.m) + T('  ·  series ') + mb(got.s));
+        if (!silent && gen === S.loadGen) loading(true, T('Laden…  zenders ') + mb(got.l) + T('  ·  films ') + mb(got.m) + T('  ·  series ') + mb(got.s));
       }
       status();
       function part(fn, key, k, label) {
         return fn(function (l) { got[k] = l; status(); })
           .then(function (list) { raw[key] = list; })
-          .catch(function () { if (!silent) toast(label + T(' laden mislukt')); });
+          .catch(function () { if (!silent && gen === S.loadGen) toast(label + T(' laden mislukt')); });
       }
       Promise.all([part(xt.live, 'live', 'l', T('Zenders')), part(xt.movies, 'movies', 'm', T('Films')), part(xt.series, 'series', 's', T('Series'))])
         .then(function () {
@@ -210,7 +224,11 @@
         if (onTab) { setMode(el.getAttribute('data-mode')); setupFocus(S.focusIdx); }
         else if (el.tagName === 'INPUT') el.focus();
         else if (el.id === 'btn-load') submit();
-        else if (el.id === 'btn-license') License.open(function () { show('setup'); setupFocus(S.focusIdx); });
+        else if (el.id === 'btn-stats') { Stats.toggle(); statsLabel(); }
+        else if (el.id === 'btn-license') {
+          if (License.licensed()) License.logout();
+          else License.open(function () { show('setup'); setupFocus(S.focusIdx); });
+        }
         break;
       case KEY.BACK:
         if (S.db) { show('home'); updateFocus(); } else exitApp();
@@ -249,8 +267,10 @@
 
   var HIST = 'tvplayer.hist';
   function loadHist() { try { return JSON.parse(localStorage.getItem(HIST)) || []; } catch (e) { return []; } }
-  function recordWatch(it) {
+  function recordWatch(it, ep) {
     if (!it) return;
+    Stats.send({ kind: it.kind === 'movie' ? 'movie' : it.kind === 'series' ? 'series' : 'live',
+                 title: it.name, folder: it.cat || '', season: ep ? String(ep.season) : '', episode: ep ? String(ep.episode) : '' });
     var h = loadHist(), k = it.kind + '|' + (it.id || it.url || it.name), e = null;
     for (var i = 0; i < h.length; i++) if (h[i].k === k) { e = h.splice(i, 1)[0]; break; }
     e = e || { k: k, kind: it.kind, id: it.id, name: it.name, img: it.img, cat: it.cat, url: it.url, n: 0 };
@@ -314,7 +334,7 @@
         '</div><span class="badge">LIVE</span></div>';
     }
     var card = '<div class="card poster"><div class="ph">' + esc(it.name) + '</div>' + img +
-      (it.rating ? '<span class="rating">★ ' + fmtRating(it.rating) + '</span>' : '') +
+      (it.rating ? '<span class="rating">' + ICO.star + ' ' + fmtRating(it.rating) + '</span>' : '') +
       '<div class="cap">' + esc(it.name) + '</div></div>';
     if (rank) return '<div class="card topcard"><span class="rank">' + rank + '</span>' + card.replace('class="card poster"', 'class="poster"') + '</div>';
     return card;
@@ -401,11 +421,12 @@
     S.rowEls.forEach(function (re, ri) {
       var near = ri >= S.row - 1 && ri <= S.row + 2;
       re.el.classList.toggle('current', ri === S.row);
+      // oude focus altijd weghalen, ook in rijen buiten beeld (anders twee markeringen)
+      if (re.f != null && re.cards && re.cards[re.f]) re.cards[re.f].classList.remove('focused');
+      re.f = null;
       if (!near) return;
       buildRow(re);
       var col = S.cols[ri] || 0, cards = re.cards;
-      if (re.f != null && cards[re.f]) cards[re.f].classList.remove('focused');
-      re.f = null;
       if (S.zone === 'rows' && ri === S.row && cards[col]) { cards[col].classList.add('focused'); re.f = col; }
       re.track.style.transform = 'translateX(' + (-Math.max(0, col - 1) * re.step) + 'px)';
       loadImgs(re, col);
@@ -423,13 +444,13 @@
   function metaHtml(it) {
     var m = [];
     if (it.kind === 'live') {
-      m.push('<span class="live-dot">● LIVE</span>');
+      m.push('<span class="live-dot">' + ICO.dot + ' LIVE</span>');
       if (it.cat) m.push(esc(it.cat));
       if (it.num) m.push(T('Kanaal ') + it.num);
     } else {
-      m.push('<span class="kind">' + (it.kind === 'series' ? 'SERIE' : 'FILM') + '</span>');
+      m.push('<span class="kind">' + (it.kind === 'series' ? T('SERIE') : T('FILM')) + '</span>');
       if (it.year) m.push(esc(it.year));
-      if (it.rating) m.push('<span class="star">★ ' + fmtRating(it.rating) + '</span>');
+      if (it.rating) m.push('<span class="star">' + ICO.star + ' ' + fmtRating(it.rating) + '</span>');
       if (it.genre) m.push(esc(it.genre)); else if (it.cat) m.push(esc(it.cat));
       if (it.duration) m.push(esc(it.duration));
     }
@@ -448,7 +469,7 @@
     $('hero-meta').innerHTML = metaHtml(it);
     $('hero-title').textContent = it.name;
     $('hero-plot').textContent = it.plot || (it.kind === 'live' ? T('Nu live op ') + (it.cat || 'tv') : '');
-    $('hero-hint').innerHTML = '<span class="pill primary">' + T(it.kind === 'live' ? T('▶  OK om te kijken') : T('▶  OK om te openen')) + '</span>' +
+    $('hero-hint').innerHTML = '<span class="pill primary">' + ICO.play + ' ' + T(it.kind === 'live' ? 'OK om te kijken' : 'OK om te openen') + '</span>' +
       (it.kind === 'series' ? '<span class="pill">' + esc(T('Seizoenen & afleveringen')) + '</span>' : '') +
       (it.kind === 'live' && it.num ? '<span class="pill">' + T('Kanaal ') + it.num + '</span>' : '');
     var hasBd = imgOk(it.backdrop);
@@ -507,7 +528,7 @@
       st.mode = 'list';
     } else if (st.mode === 'list') {
       $('b-title').textContent = KIND_LABEL[kind];
-      $('b-sub').textContent = cats.length + T(' mappen');
+      $('b-sub').textContent = cats.length + (cats.length === 1 ? T(' map') : T(' mappen'));
     } else {
       $('b-title').textContent = st.cat.name;
       $('b-sub').textContent = st.cat.items.length + T(' titels · Terug = mappen');
@@ -531,9 +552,9 @@
       for (var i = start; i < Math.min(cats.length, start + LIST_ROWS); i++) {
         var g = cats[i], on = isFav(kind, g.name);
         html += '<div class="fold' + (i === st.idx && S.zone === 'list' ? ' focused' : '') + (on ? ' on' : '') + '">' +
-          '<span class="fi">' + (fav ? (on ? '☑' : '☐') : '▸') + '</span>' +
+          '<span class="fi">' + (fav ? (on ? ICO.boxOn : ICO.box) : ICO.chev) + '</span>' +
           '<span class="fn">' + esc(g.name) + '</span><span class="fc">' + g.items.length + '</span>' +
-          '<span class="fs">' + (!fav && on ? '★' : '') + '</span></div>';
+          '<span class="fs">' + (!fav && on ? ICO.star : '') + '</span></div>';
       }
       $('b-list').innerHTML = cats.length ? html + '<div class="b-pos">' + (st.idx + 1) + ' / ' + cats.length + '</div>'
         : '<div class="empty-b">' + T('Geen mappen') + '</div>';
@@ -762,13 +783,13 @@
     d.btns = [];
     if (it.kind === 'series') {
       var ep = curEps()[S.dEp];
-      if (ep) d.btns.push({ label: T('▶  Afspelen  S') + d.seasons[S.dSeason] + T(' · A') + (ep.episode_num || S.dEp + 1), act: 'ep' });
-    } else d.btns.push({ label: T('▶  Afspelen'), act: 'play' });
+      if (ep) d.btns.push({ icon: 'play', label: T('Afspelen  S') + d.seasons[S.dSeason] + T(' · A') + (ep.episode_num || S.dEp + 1), act: 'ep' });
+    } else d.btns.push({ icon: 'play', label: T('Afspelen'), act: 'play' });
     if (Subs.configured()) d.btns.push({ label: T('Ondertitels: ') + subLabel(getSubPref(prefKeyOf(it))), act: 'subs' });
     d.btns.push({ label: T('Terug'), act: 'back' });
     S.dBtn = clamp(S.dBtn, d.btns.length);
     $('d-btns').innerHTML = d.btns.map(function (b) {
-      return '<div class="btn' + (b.act !== 'back' ? ' primary' : '') + '">' + esc(b.label) + '</div>';
+      return '<div class="btn' + (b.act !== 'back' ? ' primary' : '') + '">' + (b.icon ? ICO[b.icon] + ' ' : '') + esc(b.label) + '</div>';
     }).join('');
 
     $('d-status').textContent = d.loading ? T('Afleveringen laden…') : d.error ? T('Afleveringen laden mislukt') :
@@ -789,7 +810,7 @@
       if ($('d-more')) showImgs($('d-more'));
       return;
     }
-    $('d-eps').innerHTML = (d.seasons.length === 1 ? '<h3>Seizoen ' + esc(d.seasons[0]) + '</h3>' : '') +
+    $('d-eps').innerHTML = (d.seasons.length === 1 ? '<h3>' + T('Seizoen ') + esc(d.seasons[0]) + '</h3>' : '') +
       '<div class="track" id="d-track">' + eps.map(function (e, i) {
       var inf = e.info || {};
       var img = imgOk(inf.movie_image) ? '<img src="' + esc(Sources.sized(inf.movie_image, 'w300')) + '" alt="">' : '';
@@ -830,11 +851,11 @@
   function playEpisode(i) {
     var d = S.detail, eps = curEps(), ep = eps[i];
     if (!ep) return;
-    recordWatch(d.it);
     S.dEp = i;
     var season = d.seasons[S.dSeason];
     var url = ep.url || (S.xt && S.xt.episodeUrl(ep));
     var epn = ep.episode_num || i + 1;
+    recordWatch(d.it, { season: season, episode: epn });
     playVod(url, d.it.name, 'S' + season + T(' · A') + epn + (ep.title && ep.title !== d.it.name ? ' · ' + ep.title : ''),
       i + 1 < eps.length ? function () { playEpisode(i + 1); } : null,
       { key: 'e|' + d.it.id + '|' + season + '|' + epn, prefKey: prefKeyOf(d.it), kind: 'episode', name: d.it.name,
@@ -919,6 +940,7 @@
     $('osd-time').textContent = '';
     show('player');
     Player.play(url);
+    S.oc = 1;
     osd();
   }
   function osd(status) {
@@ -926,10 +948,85 @@
     $('osd').classList.remove('hidden');
     $('player').classList.add('osd-on');
     updateProgress();
+    renderCtrl();
     clearTimeout(S.osdTimer);
     S.osdTimer = setTimeout(function () {
-      if (!$('osd-status').textContent) { $('osd').classList.add('hidden'); $('player').classList.remove('osd-on'); }
+      if (!$('osd-status').textContent && !Player.paused()) hideOsd();
     }, 5000);
+  }
+  function hideOsd() {
+    clearTimeout(S.osdTimer);
+    $('osd').classList.add('hidden'); $('player').classList.remove('osd-on');
+    S.oc = 1;
+  }
+
+  /* ---------- Afspeelknoppen (film/aflevering) ---------- */
+  function ctrlEls() {
+    return Array.prototype.filter.call(document.querySelectorAll('#osd-ctrl .oc'), function (b) { return !b.classList.contains('hidden'); });
+  }
+  function renderCtrl() {
+    var p = S.play;
+    if (!p || p.live) return;
+    $('oc-next').classList.toggle('hidden', !p.next);
+    $('oc-play').innerHTML = Player.paused() ? ICO.play : ICO.pause;
+    var els = ctrlEls(), menu = !!S.sm;
+    if (S.oc !== 'bar') S.oc = clamp(S.oc == null ? 1 : S.oc, els.length);
+    els.forEach(function (b, i) { b.classList.toggle('focused', !menu && S.oc === i); });
+    $('osd-prog').classList.toggle('focused', !menu && S.oc === 'bar');
+  }
+  function showCtrl(focus) { S.oc = focus; osd(); }
+  function togglePlay() {
+    var pausedNow = Player.togglePause();
+    osd(pausedNow ? T('Gepauzeerd') : '');
+  }
+  function ctrlAction(act) {
+    switch (act) {
+      case 'rew': Player.seek(-10000); osd(); break;
+      case 'ff': Player.seek(10000); osd(); break;
+      case 'play': togglePlay(); break;
+      case 'subs': openSubMenu(); break;
+      case 'next': if (S.play && S.play.next) S.play.next(); break;
+    }
+  }
+  /* Toetsregels volgens Samsung-richtlijn voor mediaspelers */
+  function vodKey(code) {
+    var vis = !$('osd').classList.contains('hidden');
+    switch (code) {
+      case KEY.CAPTION: openSubMenu(); return true;
+      case KEY.STOP: leavePlayer(); return true;
+      case KEY.BACK: if (vis) hideOsd(); else leavePlayer(); return true;
+      case KEY.PLAY_PAUSE: S.oc = 1; togglePlay(); return true;
+      case KEY.PLAY: S.oc = 1; if (Player.paused()) togglePlay(); else osd(); return true;
+      case KEY.PAUSE: S.oc = 1; if (!Player.paused()) togglePlay(); else osd(); return true;
+      case KEY.REW: Player.seek(-60000); showCtrl(0); return true;
+      case KEY.FF: Player.seek(60000); showCtrl(2); return true;
+    }
+    if (!vis) {
+      if (code === KEY.ENTER || code === KEY.UP || code === KEY.DOWN) { showCtrl(1); return true; }
+      if (code === KEY.LEFT || code === KEY.RIGHT) { Player.seek(code === KEY.LEFT ? -10000 : 10000); showCtrl('bar'); return true; }
+      return false;
+    }
+    if (S.oc === 'bar') {
+      switch (code) {
+        case KEY.LEFT: Player.seek(-10000); break;
+        case KEY.RIGHT: Player.seek(10000); break;
+        case KEY.DOWN: S.oc = 1; break;
+        case KEY.ENTER: togglePlay(); return true;
+        case KEY.UP: break;
+        default: return false;
+      }
+      osd(); return true;
+    }
+    var n = ctrlEls().length;
+    switch (code) {
+      case KEY.LEFT: S.oc = Math.max(0, S.oc - 1); break;
+      case KEY.RIGHT: S.oc = Math.min(n - 1, S.oc + 1); break;
+      case KEY.UP: S.oc = 'bar'; break;
+      case KEY.DOWN: break;
+      case KEY.ENTER: ctrlAction(ctrlEls()[S.oc].getAttribute('data-act')); return true;
+      default: return false;
+    }
+    osd(); return true;
   }
   var flashTimer;
   function flash(t) {
@@ -956,7 +1053,7 @@
   function leavePlayer() {
     Subs.hide(); closeSubMenu();
     Player.stop();
-    $('osd').classList.add('hidden');
+    hideOsd();
     $('osd-status').textContent = '';
     var back = S.play ? S.play.back : 'home';
     S.play = null;
@@ -983,7 +1080,7 @@
     var p = S.play;
     if (!p) return false;
     if (S.sm) return subMenuKey(code);
-    if (!p.live && (code === KEY.UP || code === KEY.CAPTION)) { openSubMenu(); return true; }
+    if (!p.live) return vodKey(code);
     if (p.live && code === KEY.CAPTION) { openSubMenu(); return true; }
     if (p.live && code >= 48 && code <= 57) { digit(String(code - 48)); return true; }
     switch (code) {
@@ -1080,12 +1177,13 @@
     return items;
   }
   function openSubMenu() {
+    hideOsd();                       // maar één focus: knoppen weg zolang het menu open is
     S.sm = { items: subMenuItems(), idx: 0 };
     S.sm.items.forEach(function (it, i) { if (it.on) S.sm.idx = i; });
     $('submenu').classList.remove('hidden');
     renderSubMenu();
   }
-  function closeSubMenu() { S.sm = null; $('submenu').classList.add('hidden'); }
+  function closeSubMenu() { S.sm = null; $('submenu').classList.add('hidden'); renderCtrl(); }
   function renderSubMenu() {
     if (!S.sm) return;
     var old = S.sm.idx; S.sm.items = subMenuItems(); S.sm.idx = clamp(old, S.sm.items.length);
@@ -1124,10 +1222,15 @@
   document.addEventListener('keydown', function (e) {
     var code = e.keyCode;
     if (window.License && License.active()) { if (License.key(code)) e.preventDefault(); return; }
+    if (window.Stats && Stats.active()) { Stats.key(code); e.preventDefault(); return; }
     if (netDown) { if (code === KEY.BACK || code === KEY.ESC || code === KEY.BACKSPACE) exitApp(); e.preventDefault(); return; }
     var inInput = document.activeElement && document.activeElement.tagName === 'INPUT';
     if (code === KEY.ESC || (code === KEY.BACKSPACE && !inInput)) code = KEY.BACK;
-    if (!$('loading').classList.contains('hidden')) { e.preventDefault(); return; }
+    if (!$('loading').classList.contains('hidden')) {
+      // Tijdens laden: Terug breekt het laden af (Samsung RC150003); andere toetsen doen niets
+      if (code === KEY.BACK) cancelLoading();
+      e.preventDefault(); return;
+    }
     var handled =
       S.screen === 'setup' ? setupKey(code) :
       S.screen === 'home' ? homeKey(code) :
@@ -1137,12 +1240,23 @@
   });
 
   document.addEventListener('click', function (e) {
+    var oc = e.target.closest && e.target.closest('#osd-ctrl .oc');
+    if (oc && S.screen === 'player' && S.play && !S.play.live) { S.oc = ctrlEls().indexOf(oc); ctrlAction(oc.getAttribute('data-act')); return; }
+  });
+  document.addEventListener('click', function (e) {
     if (window.License && License.active()) return;
     var t = e.target.closest && e.target.closest('#setup .focusable');
     if (!t || S.screen !== 'setup') return;
     var i = setupFocusables().indexOf(t);
     if (i > -1) { setupFocus(i); setupKey(KEY.ENTER); }
   });
+
+  /* ---------- Afspeelknoppen vullen (icoon + vertaalde tekst) ---------- */
+  document.querySelector('#osd-ctrl [data-act="rew"]').innerHTML = ICO.rew + ' 10 s';
+  document.querySelector('#osd-ctrl [data-act="ff"]').innerHTML = '10 s ' + ICO.ff;
+  $('oc-play').innerHTML = ICO.pause;
+  $('oc-next').innerHTML = esc(T('Volgende aflevering')) + ' ' + ICO.next;
+  document.querySelector('#q-wrap .sb-icon').innerHTML = ICO.search;
 
   /* ---------- Netwerk: melding bij wegvallen (Samsung-eis) ---------- */
   var netDown = false;
@@ -1155,7 +1269,7 @@
     if (!netDown) return; netDown = false;
     $('netbox').classList.add('hidden');
     toast(T('Verbinding hersteld'));
-    if (S.screen === 'player' && S.play) { if (S.play.live) startLive(); }
+    if (S.screen === 'player' && S.play) Player.restart();   // live en film: verder spelen
   }
   window.addEventListener('offline', netLost);
   window.addEventListener('online', netBack);
@@ -1169,7 +1283,8 @@
 
   /* ---------- Start (pas na geldige licentie) ---------- */
   renderNav();
-  License.ensure(function (info) {
+  License.ensure(function (info) { Stats.ask(function () { start(info); }); });
+  function start(info) {
     show('setup');
     if (info.trialDays) toast(T('Gratis proefperiode · nog {n} dag(en)').replace('{n}', info.trialDays));
     if (info.trialEnded) toast(T('Je gratis proefperiode is voorbij'));
@@ -1177,7 +1292,7 @@
     prefill(saved);
     setupFocus(0);
     if (saved) openSource(saved, false);
-  });
+  }
 
   // Testhaak voor browser
   window.__tv = { S: S, loadDB: function () {} };

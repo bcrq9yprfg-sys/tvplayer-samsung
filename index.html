@@ -40,6 +40,7 @@
   </div>
   <button class="focusable primary" id="btn-load">Laden</button>
   <button class="focusable" id="btn-license">Licentie invoeren</button>
+  <button class="focusable" id="btn-stats"></button>
   <p id="setup-msg" class="msg"></p>
   <p class="hint">Pijltjes: navigeren · OK: kiezen · Terug: vorige</p>
   <div id="qr-panel">
@@ -65,7 +66,7 @@
     </div>
     <div id="searchbox">
       <div class="sb-label">Zoeken</div>
-      <div id="q-wrap"><span class="sb-icon">⌕</span><input id="q" type="text" autocomplete="off" placeholder="Zoek films, series of zenders"></div>
+      <div id="q-wrap"><span class="sb-icon"></span><input id="q" type="text" autocomplete="off" placeholder="Zoek films, series of zenders"></div>
       <div class="sb-hint">OK: typen · Omlaag: resultaten</div>
     </div>
   </div>
@@ -127,13 +128,24 @@
     <div id="osd-prog">
       <div class="bar"><div id="osd-bar"></div></div>
       <div id="osd-time"></div>
-      <div id="osd-hint">▲ Ondertitels &amp; audio</div>
+    </div>
+    <div id="osd-ctrl">
+      <button class="oc" data-act="rew"></button>
+      <button class="oc" data-act="play" id="oc-play"></button>
+      <button class="oc" data-act="ff"></button>
+      <button class="oc" data-act="subs">Ondertitels &amp; audio</button>
+      <button class="oc" data-act="next" id="oc-next"></button>
     </div>
   </div>
 </div>
 
 <div id="loading" class="hidden"><div class="spinner"></div><div id="loading-text"></div></div>
 <div id="toast" class="hidden"></div>
+<div id="statsbox" class="hidden"><div class="statsbox-in">
+  <h2>Help AM IPTV beter maken</h2>
+  <p>Mogen we bijhouden welke zenders, films en series je kijkt? We gebruiken dit om de app te verbeteren. Je playlist en inloggegevens worden nooit verstuurd. Je kunt dit later wijzigen via de Playlist-tab.</p>
+  <div class="statsbox-btns"><button id="st-yes">Ja, akkoord</button><button id="st-no">Nee, liever niet</button></div>
+</div></div>
 <div id="netbox" class="hidden"><div class="netbox-in">Geen netwerkverbinding. Controleer je internet.</div></div>
 
 <script src="js/i18n.js"></script>
@@ -141,6 +153,7 @@
 <script src="js/license.js"></script>
 <script src="js/qrcode.js"></script>
 <script src="js/pair.js"></script>
+<script src="js/stats.js"></script>
 <script src="js/parse.js"></script>
 <script src="js/sources.js"></script>
 <script src="js/player.js"></script>

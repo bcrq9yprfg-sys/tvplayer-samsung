@@ -90,6 +90,7 @@ var Parse = (function () {
 
 // Als Web Worker: berichten verwerken
 if (typeof window === 'undefined' && typeof self !== 'undefined' && typeof importScripts === 'function') {
+  try { importScripts('i18n.js'); } catch (e) { self.T = function (s) { return s; }; }   // vertalingen ook in de worker
   self.onmessage = function (e) {
     var d = e.data;
     try {
